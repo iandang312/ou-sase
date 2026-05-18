@@ -55,3 +55,7 @@ Desktop.ini
 *.pem
 .cache/
 .turbo/
+
+
+#claude
+.claude/

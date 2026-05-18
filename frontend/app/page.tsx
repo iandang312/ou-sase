@@ -1,31 +1,17 @@
-import Image from "next/image";
+import ScrollExpandHero from "@/components/ui/scroll-expansion-hero";
 
 export default function Home() {
   return (
-    <section className="relative flex flex-1 items-center justify-center overflow-hidden">
-      <Image
-        src="/homepage.JPG"
-        alt=""
-        fill
-        sizes="100vw"
-        preload
-        className="object-cover"
-      />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
-      <div className="relative z-10 flex max-w-4xl flex-col items-center gap-6 px-6 text-center text-white">
-        <p className="text-sm font-medium uppercase tracking-[0.3em] text-white/80">
-          University of Oklahoma
-        </p>
-        <h1 className="text-5xl font-bold leading-tight tracking-tight sm:text-6xl md:text-7xl">
-          Society of Asian Scientists &amp; Engineers
-        </h1>
-        <p className="max-w-2xl text-lg leading-8 text-white/85 sm:text-xl">
-          Empowering Asian heritage scientists and engineers at OU to achieve their full
-          career potential through professional development, cultural awareness, and community.
-        </p>
-        <div className="mt-4 flex flex-col gap-4 sm:flex-row">
+    <ScrollExpandHero
+      mediaSrc="/homepage.JPG"
+      bgColor="#F5F0E8"
+      kicker="University of Oklahoma"
+      title="Society of Asian Scientists & Engineers"
+      subtitle="Empowering Asian heritage scientists and engineers at OU to achieve their full career potential through professional development, cultural awareness, and community."
+      ctas={
+        <>
           <a
-            href="#join"
+            href="#about"
             className="flex h-12 items-center justify-center rounded-full bg-white px-8 text-base font-semibold text-black transition-colors hover:bg-white/90"
           >
             Join SASE
@@ -34,10 +20,25 @@ export default function Home() {
             href="#about"
             className="flex h-12 items-center justify-center rounded-full border border-white/60 px-8 text-base font-semibold text-white transition-colors hover:bg-white/10"
           >
-            Sponsor Us
+            Learn More
           </a>
-        </div>
+        </>
+      }
+    >
+      <div id="about" className="mx-auto max-w-3xl text-[#0a0a0a]">
+        <h2 className="mb-6 text-3xl font-bold sm:text-4xl">About SASE at OU</h2>
+        <p className="mb-6 text-lg leading-relaxed">
+          The OU chapter of the Society of Asian Scientists and Engineers brings together
+          STEM students from across the University of Oklahoma. We exist to help our
+          members achieve their full career potential through professional development,
+          cultural awareness, and community engagement.
+        </p>
+        <p className="text-lg leading-relaxed">
+          Whether you&apos;re looking for your first internship, your next research lab,
+          mentorship from upperclassmen and alumni, or simply a community that gets it —
+          you&apos;ll find your people here.
+        </p>
       </div>
-    </section>
+    </ScrollExpandHero>
   );
 }
