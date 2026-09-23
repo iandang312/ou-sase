@@ -52,7 +52,6 @@ All of these live in `frontend/.env.local` (copied from `frontend/.env.example`)
 | `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | Firebase Cloud Messaging sender ID | Same screen as above | Public by design |
 | `NEXT_PUBLIC_FIREBASE_APP_ID` | Firebase web app ID | Same screen as above | Public by design |
 | `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` | Your Cloudinary account's "cloud name" | Cloudinary console → Dashboard (top of page, "Cloud name") | Public by design |
-| `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET` | Name of an unsigned upload preset used by the exec upload widget | Cloudinary console → Settings → Upload → Upload presets | Public by design |
 | `CLOUDINARY_API_KEY` | Cloudinary API key | Cloudinary console → Dashboard ("API Key") | **SECRET** |
 | `CLOUDINARY_API_SECRET` | Cloudinary API secret | Cloudinary console → Dashboard ("API Secret" — click "reveal") | **SECRET** |
 
@@ -65,6 +64,33 @@ designed around that. Firebase's real security boundary is `firestore.rules`
 only ever read on the server (in `frontend/app/api/cloudinary/sign/route.ts`)
 and must never appear in a `NEXT_PUBLIC_` variable or in any file that gets
 committed to git.
+
+### Server-only Firebase Admin credentials
+
+Three more variables let the server check that whoever is uploading a photo
+or resume is genuinely a current officer:
+
+| Variable | Where it comes from |
+|---|---|
+| `FIREBASE_PROJECT_ID` | the service account JSON |
+| `FIREBASE_CLIENT_EMAIL` | the service account JSON |
+| `FIREBASE_PRIVATE_KEY` | the service account JSON |
+
+Firebase console -> gear -> **Project settings -> Service accounts ->
+Generate new private key**. All three are SECRET and must never carry a
+`NEXT_PUBLIC_` prefix, which would publish them to every visitor's browser.
+
+`FIREBASE_PRIVATE_KEY` must be **one line, wrapped in double quotes, with
+every newline written as the two characters backslash-n (`\n`)**. A real
+line break there breaks parsing and uploads stop working with a confusing error.
+
+### Do not use an unsigned Cloudinary upload preset
+
+Uploads go through `/api/cloudinary/sign`, which refuses anyone who is not
+an active exec. If a previous maintainer created an *unsigned* upload
+preset, delete it in the Cloudinary console. An unsigned preset plus the
+cloud name is enough for anyone to upload into your account, and both of
+those values are readable in the browser bundle.
 
 ## 4. Bootstrapping the first exec (READ THIS — without it, nobody can log in)
 
