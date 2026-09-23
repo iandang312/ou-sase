@@ -3,6 +3,8 @@ import { ButtonLink } from "@/components/ui/Button";
 import { Container, Section, SectionHeading } from "@/components/ui/Layout";
 import { Reveal, RevealGroup } from "@/components/ui/Reveal";
 import { RecruitmentBrowser } from "@/components/recruitment/RecruitmentBrowser";
+import { TalentPoolScene } from "@/components/recruitment/TalentPoolScene";
+import { HowRecruitingWorksScene } from "@/components/recruitment/HowRecruitingWorksScene";
 import { SAMPLE_MEMBERS } from "@/components/recruitment/sampleMembers";
 import { listVisibleMembers } from "@/lib/firestore";
 import { SHOW_PLACEHOLDER_DATA } from "@/lib/placeholders";
@@ -48,7 +50,7 @@ export default async function RecruitmentPage(_props: PageProps<"/recruitment">)
 
   return (
     <>
-      <Section tone="light" className="relative overflow-hidden">
+      <Section tone="light" className="relative min-h-svh flex flex-col justify-center overflow-hidden">
         {/* Soft tinted wash behind the hero for depth, per DESIGN.md "Hero
             bands". Decorative only: aria-hidden, no pointer events, and it
             never touches text contrast since nothing sits inside it. */}
@@ -56,7 +58,12 @@ export default async function RecruitmentPage(_props: PageProps<"/recruitment">)
           aria-hidden="true"
           className="bg-pastel-blue-soft pointer-events-none absolute -right-24 -top-40 h-96 w-96 rounded-full blur-3xl"
         />
+        <div
+          aria-hidden="true"
+          className="bg-pastel-peach-soft pointer-events-none absolute -bottom-32 -left-20 h-72 w-72 rounded-full blur-3xl"
+        />
         <Container className="relative">
+          <h1 className="sr-only">OU SASE recruitment</h1>
           <SectionHeading
             kicker="For recruiters"
             title="Meet OU SASE's talent pipeline"
@@ -89,13 +96,29 @@ export default async function RecruitmentPage(_props: PageProps<"/recruitment">)
         </Container>
       </Section>
 
-      <Section tone="soft">
+      <TalentPoolScene members={members} />
+
+      {/* The interactive browser stays a normal, freely scrollable section —
+          never inside a sticky ScrollScene — so filtering, focus and the
+          member cards keep working exactly as before. */}
+      <Section tone="soft" className="min-h-svh">
         <Container>
-          <RecruitmentBrowser members={members} />
+          <h2 className="font-display text-display-sm md:text-display-md text-ink">
+            Browse the roster
+          </h2>
+          <p className="mt-3 max-w-[60ch] text-body-md text-body">
+            Filter by graduation year, major, or what a member is seeking.
+            Results update as you type.
+          </p>
+          <div className="mt-8">
+            <RecruitmentBrowser members={members} />
+          </div>
         </Container>
       </Section>
 
-      <Section tone="dark">
+      <HowRecruitingWorksScene />
+
+      <Section tone="dark" className="min-h-svh flex flex-col justify-center">
         <Container>
           <SectionHeading
             tone="dark"
