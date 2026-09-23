@@ -9,22 +9,38 @@ import { SquiggleRails } from "@/components/site/SquiggleRails";
  */
 export function Hero() {
   return (
-    <Section tone="light" className="relative overflow-hidden pt-20 md:pt-28">
+    <Section tone="light" className="relative overflow-hidden pt-24 md:pt-32 pb-20 md:pb-28">
+      {/* Ambient wash behind the type. A fill token, not text — stays inside
+          the pastel rule — softened with blur so it reads as light, not a
+          shape. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-[-220px] h-[480px] w-[820px] -translate-x-1/2 rounded-full bg-pastel-blue-soft/80 blur-3xl"
+      />
       <SquiggleRails tone="blue" />
       <Container>
-        <div className="mx-auto flex max-w-[820px] flex-col items-center gap-6 text-center">
-          <span className="text-caption-strong text-brand-ink uppercase tracking-[0.08em]">
+        <div className="relative mx-auto flex max-w-[860px] flex-col items-center gap-7 text-center">
+          <span className="text-caption-strong text-brand-ink uppercase tracking-[0.14em]">
             OU Chapter
           </span>
-          <h1 className="font-display text-display-lg md:text-display-mega text-ink">
-            Engineers first. Community always.
+          {/* Two-line composition: scale and color carry the hierarchy, not
+              weight — the display face stays 400 throughout. The second line
+              sits a size down and in brand-ink, so it reads as a quiet answer
+              to the first rather than a repeat of it. */}
+          <h1 className="font-display flex flex-col gap-1 md:gap-2">
+            <span className="text-display-lg md:text-display-mega text-ink">
+              Engineers first.
+            </span>
+            <span className="text-display-sm md:text-display-lg text-brand-ink">
+              Community always.
+            </span>
           </h1>
-          <p className="text-body-md md:text-title-md text-body max-w-[56ch]">
+          <p className="text-body-md md:text-title-md text-body max-w-[52ch]">
             SASE at OU is where Asian-heritage scientists and engineers build
             careers, find people who get it, and give back to campus and
             community along the way.
           </p>
-          <div className="mt-2 flex flex-col gap-3 sm:flex-row">
+          <div className="mt-3 flex flex-col gap-3 sm:flex-row">
             <ButtonLink href="/recruitment" size="lg">
               Join the chapter
             </ButtonLink>

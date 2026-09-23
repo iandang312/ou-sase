@@ -32,6 +32,8 @@ export function ExecsManager() {
   const [busy, setBusy] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [listError, setListError] = useState<string | null>(null);
+  const [listNotice, setListNotice] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<ExecRole>("officer");
 
@@ -105,14 +107,16 @@ export function ExecsManager() {
     }
   }
 
-  async function withRefresh(action: () => Promise<void>) {
+  async function withRefresh(action: () => Promise<void>, successMessage?: string) {
     setBusy(true);
-    setFormError(null);
+    setListError(null);
+    setListNotice(null);
     try {
       await action();
       await refresh();
+      if (successMessage) setListNotice(successMessage);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : "That action failed.");
+      setListError(err instanceof Error ? err.message : "That action failed.");
     } finally {
       setBusy(false);
     }
@@ -204,7 +208,10 @@ export function ExecsManager() {
                   label="Cancel invite"
                   confirmLabel="Confirm cancel?"
                   onConfirm={() =>
-                    withRefresh(() => revokeInvite(invite.email))
+                    withRefresh(
+                      () => revokeInvite(invite.email),
+                      `Cancelled the invite for ${invite.email}.`,
+                    )
                   }
                 />
               </li>
@@ -219,6 +226,8 @@ export function ExecsManager() {
         {loadError ? (
           <p className="text-body-sm text-negative">{loadError}</p>
         ) : null}
+        {listError ? <p className="text-body-sm text-negative mb-4">{listError}</p> : null}
+        {listNotice ? <p className="text-body-sm text-positive mb-4">{listNotice}</p> : null}
 
         {!loadError && execs.length === 0 ? (
           <p className="text-body-sm text-body">No officers yet.</p>
@@ -250,8 +259,9 @@ export function ExecsManager() {
                     value={row.role}
                     disabled={busy || isMe}
                     onChange={(e) =>
-                      withRefresh(() =>
-                        setExecRole(row.id, e.target.value as ExecRole),
+                      withRefresh(
+                        () => setExecRole(row.id, e.target.value as ExecRole),
+                        `Updated ${row.email} to ${e.target.value}.`,
                       )
                     }
                     className="border-hairline text-body-sm h-10 rounded-md border px-3 disabled:opacity-50"
@@ -274,7 +284,10 @@ export function ExecsManager() {
                       label="Revoke access"
                       confirmLabel="Confirm revoke?"
                       onConfirm={() =>
-                        withRefresh(() => setExecActive(row.id, false))
+                        withRefresh(
+                          () => setExecActive(row.id, false),
+                          `Revoked access for ${row.email}. Their record is kept, not deleted.`,
+                        )
                       }
                     />
                   ) : (
@@ -282,7 +295,10 @@ export function ExecsManager() {
                       variant="secondary"
                       disabled={busy}
                       onClick={() =>
-                        withRefresh(() => setExecActive(row.id, true))
+                        withRefresh(
+                          () => setExecActive(row.id, true),
+                          `Restored access for ${row.email}.`,
+                        )
                       }
                     >
                       Restore access

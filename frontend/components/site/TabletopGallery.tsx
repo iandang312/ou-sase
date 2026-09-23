@@ -19,18 +19,25 @@ import { CloudImage } from "./CloudImage";
  * mismatches, and make the pile jump on every reload.
  */
 
-/** Deterministic scatter slots. Extra photos wrap around and layer deeper. */
+/**
+ * Deterministic scatter slots. Extra photos wrap around and layer deeper.
+ *
+ * `w` varies the print width per slot. Uniform sizes read as a grid that
+ * happens to be rotated; varied sizes read as prints dropped on a desk, some
+ * nearer than others. The z-order is deliberately not sequential — a pile
+ * where each photo sits neatly on the previous one looks stacked, not strewn.
+ */
 const SLOTS = [
-  { left: "2%", top: "10%", z: 3 },
-  { left: "20%", top: "2%", z: 5 },
-  { left: "39%", top: "14%", z: 4 },
-  { left: "57%", top: "1%", z: 6 },
-  { left: "74%", top: "12%", z: 2 },
-  { left: "11%", top: "46%", z: 6 },
-  { left: "31%", top: "54%", z: 3 },
-  { left: "50%", top: "44%", z: 7 },
-  { left: "68%", top: "52%", z: 4 },
-  { left: "83%", top: "38%", z: 5 },
+  { left: "1%", top: "12%", z: 3, w: 232 },
+  { left: "18%", top: "1%", z: 6, w: 264 },
+  { left: "38%", top: "16%", z: 4, w: 208 },
+  { left: "55%", top: "2%", z: 7, w: 248 },
+  { left: "75%", top: "10%", z: 2, w: 236 },
+  { left: "9%", top: "48%", z: 8, w: 252 },
+  { left: "30%", top: "56%", z: 3, w: 216 },
+  { left: "49%", top: "46%", z: 9, w: 240 },
+  { left: "67%", top: "55%", z: 5, w: 224 },
+  { left: "84%", top: "36%", z: 6, w: 244 },
 ];
 
 function Print({
@@ -44,7 +51,7 @@ function Print({
 }) {
   return (
     <figure
-      className={`bg-canvas border-hairline rounded-sm border p-2 shadow-[0_1px_2px_rgba(10,11,13,0.06)] ${className}`}
+      className={`bg-canvas border-hairline rounded-sm border p-2 shadow-[0_1px_2px_rgba(10,11,13,0.06),0_8px_20px_-12px_rgba(10,11,13,0.25)] ${className}`}
       style={style}
     >
       <CloudImage
@@ -103,13 +110,34 @@ export function TabletopGallery({
             <Print
               key={photo.id}
               photo={photo}
-              className="absolute w-[228px] transition-transform duration-200 hover:z-20 hover:scale-[1.03] xl:w-[252px]"
-              style={{
-                left: slot.left,
-                top: slot.top,
-                zIndex: slot.z - depth,
-                transform: `rotate(${photo.rotation}deg) scale(${photo.scale})`,
-              }}
+              /*
+               * Hovering "picks the print up": it straightens to level, lifts
+               * slightly and rises above the pile, the way you'd tilt a photo
+               * toward you to look at it. The rest transform is driven by CSS
+               * custom properties rather than a literal inline transform, so
+               * the hover rule can override it — an inline transform would win
+               * on specificity and the pick-up would never happen.
+               */
+              className={
+                "absolute origin-center [transform:rotate(var(--rot))_scale(var(--scl))] " +
+                "transition-[transform,box-shadow] duration-300 ease-out " +
+                "hover:z-30 hover:[transform:rotate(0deg)_scale(1.07)] " +
+                "hover:shadow-[0_2px_4px_rgba(10,11,13,0.08),0_22px_40px_-16px_rgba(10,11,13,0.35)]"
+              }
+              style={
+                {
+                  left: slot.left,
+                  top: slot.top,
+                  width: `${slot.w}px`,
+                  zIndex: slot.z - depth,
+                  // Rotation and scale come from the photo record, never from
+                  // Math.random(): random values differ between the server and
+                  // client render, causing hydration mismatches, and would
+                  // reshuffle the pile on every reload.
+                  "--rot": `${photo.rotation}deg`,
+                  "--scl": `${photo.scale}`,
+                } as React.CSSProperties
+              }
             />
           );
         })}

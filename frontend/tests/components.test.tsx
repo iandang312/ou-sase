@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { MemberCard } from "@/components/recruitment/MemberCard";
@@ -99,10 +99,30 @@ describe("TabletopGallery", () => {
   it("uses the rotation stored on the photo rather than a random value", () => {
     // Randomised rotation would differ between server and client render and
     // cause hydration mismatches, so this must come from the data.
+    //
+    // The scatter applies rotation via the --rot custom property rather than a
+    // literal inline `transform`, so that the hover "pick up" rule can override
+    // it — an inline transform would beat the hover rule on specificity. The
+    // value must still trace back to the photo record.
     const photo = { ...PLACEHOLDER_PHOTOS[0], rotation: -5, scale: 1 };
     const { container } = render(<TabletopGallery photos={[photo]} />);
-    const rotated = container.querySelector('[style*="rotate(-5deg)"]');
+    const rotated = container.querySelector('[style*="-5deg"]');
     expect(rotated).not.toBeNull();
+    expect(rotated?.getAttribute("style")).toContain("--rot");
+  });
+
+  it("does not randomise rotation between renders", () => {
+    const photo = { ...PLACEHOLDER_PHOTOS[0], rotation: 4, scale: 1 };
+    const first = render(<TabletopGallery photos={[photo]} />);
+    const a = first.container
+      .querySelector("[style*='--rot']")
+      ?.getAttribute("style");
+    cleanup();
+    const second = render(<TabletopGallery photos={[photo]} />);
+    const b = second.container
+      .querySelector("[style*='--rot']")
+      ?.getAttribute("style");
+    expect(a).toBe(b);
   });
 });
 

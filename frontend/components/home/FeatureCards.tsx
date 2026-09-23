@@ -24,7 +24,13 @@ const FEATURES: Feature[] = [
 /** 3-up feature cards — what SASE is and does, told through what members get. */
 export function FeatureCards() {
   return (
-    <Section tone="soft">
+    <Section tone="soft" className="relative">
+      {/* Soft vignette at the seam with the light band above, so the tone
+          change reads as a gradient shift rather than a hard cut. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/[0.03] to-transparent"
+      />
       <Container>
         <SectionHeading
           kicker="Why SASE"

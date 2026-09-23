@@ -6,6 +6,13 @@ import { SquiggleRails } from "@/components/site/SquiggleRails";
 export function JoinCta() {
   return (
     <Section tone="dark" className="relative overflow-hidden">
+      {/* This is the biggest tonal jump on the page (light -> dark); a
+          deeper vignette right at the seam makes the drop feel intentional
+          instead of abrupt. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/25 to-transparent"
+      />
       <SquiggleRails tone="white" />
       <Container>
         <div className="mx-auto flex max-w-[720px] flex-col items-center gap-5 text-center">

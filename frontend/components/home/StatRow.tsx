@@ -16,7 +16,11 @@ const STATS: Stat[] = [
 /** A quiet stat strip — three numbers, no chart, no animation. */
 export function StatRow() {
   return (
-    <Section tone="light" className="!py-10 md:!py-14">
+    <Section tone="light" className="relative !py-10 md:!py-14">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/[0.02] to-transparent"
+      />
       <Container>
         <div className="border-hairline grid grid-cols-1 divide-y divide-hairline rounded-lg border sm:grid-cols-3 sm:divide-x sm:divide-y-0">
           {STATS.map((stat) => (

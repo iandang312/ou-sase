@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Container } from "@/components/ui/Layout";
-import { NAV_LINKS } from "./Nav";
+import { NAV_LINKS } from "./nav-links";
 
 const SOCIALS = [
   { href: "https://www.instagram.com/", label: "Instagram" },

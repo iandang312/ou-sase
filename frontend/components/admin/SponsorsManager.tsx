@@ -6,10 +6,13 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { ConfirmButton } from "@/components/admin/ConfirmButton";
 import { CloudinaryUploadField } from "@/components/admin/CloudinaryUploadField";
+import { SaveStatus } from "@/components/admin/SaveStatus";
 import { deleteSponsor, listSponsors, upsertSponsor } from "@/lib/firestore";
 import { SPONSOR_TIERS, type Sponsor, type SponsorTier } from "@/lib/types";
 
 const TIERS = Object.keys(SPONSOR_TIERS) as SponsorTier[];
+
+const inputClass = "border-hairline rounded-md border px-3 py-2 text-body-md bg-canvas";
 
 type SponsorDraft = Omit<Sponsor, "id">;
 
@@ -31,7 +34,7 @@ export function SponsorsManager() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | "new" | null>(null);
   const [draft, setDraft] = useState<SponsorDraft>(emptyDraft());
-  const [saving, setSaving] = useState(false);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [saveError, setSaveError] = useState<string | null>(null);
 
   async function refresh() {
@@ -65,6 +68,7 @@ export function SponsorsManager() {
 
   function startNew() {
     setDraft(emptyDraft());
+    setSaveState("idle");
     setSaveError(null);
     setEditingId("new");
   }
@@ -72,21 +76,25 @@ export function SponsorsManager() {
   function startEdit(sponsor: Sponsor) {
     const { id: _id, ...rest } = sponsor;
     setDraft(rest);
+    setSaveState("idle");
     setSaveError(null);
     setEditingId(sponsor.id);
   }
 
   async function handleSave() {
-    setSaving(true);
+    setSaveState("saving");
     setSaveError(null);
     try {
       await upsertSponsor({ ...draft, id: editingId === "new" ? undefined : editingId! });
-      setEditingId(null);
+      setSaveState("saved");
       await refresh();
+      setTimeout(() => {
+        setEditingId(null);
+        setSaveState("idle");
+      }, 700);
     } catch (err) {
+      setSaveState("error");
       setSaveError(err instanceof Error ? err.message : "Failed to save sponsor.");
-    } finally {
-      setSaving(false);
     }
   }
 
@@ -106,15 +114,23 @@ export function SponsorsManager() {
 
       {editingId !== null ? (
         <Card>
-          <h3 className="text-title-sm text-ink mb-4 font-semibold">
-            {editingId === "new" ? "New sponsor" : "Edit sponsor"}
-          </h3>
-          {saveError ? <p className="text-negative text-body-sm mb-3">{saveError}</p> : null}
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h3 className="text-title-sm text-ink font-semibold">
+              {editingId === "new" ? "New sponsor" : `Edit ${draft.name || "sponsor"}`}
+            </h3>
+            <button
+              type="button"
+              onClick={() => setEditingId(null)}
+              className="text-body-sm text-brand-ink hover:underline"
+            >
+              ← Back to list
+            </button>
+          </div>
           <div className="grid gap-4 md:grid-cols-2">
             <label className="flex flex-col gap-1">
               <span className="text-caption-strong text-ink">Name</span>
               <input
-                className="border-hairline rounded-md border px-3 py-2"
+                className={inputClass}
                 value={draft.name}
                 onChange={(e) => setDraft({ ...draft, name: e.target.value })}
               />
@@ -122,7 +138,7 @@ export function SponsorsManager() {
             <label className="flex flex-col gap-1">
               <span className="text-caption-strong text-ink">Tier</span>
               <select
-                className="border-hairline rounded-md border px-3 py-2"
+                className={inputClass}
                 value={draft.tier}
                 onChange={(e) => setDraft({ ...draft, tier: e.target.value as SponsorTier })}
               >
@@ -136,7 +152,7 @@ export function SponsorsManager() {
             <label className="flex flex-col gap-1">
               <span className="text-caption-strong text-ink">Website URL</span>
               <input
-                className="border-hairline rounded-md border px-3 py-2"
+                className={inputClass}
                 value={draft.websiteUrl ?? ""}
                 onChange={(e) => setDraft({ ...draft, websiteUrl: e.target.value })}
               />
@@ -145,7 +161,7 @@ export function SponsorsManager() {
               <span className="text-caption-strong text-ink">Partner since (year)</span>
               <input
                 type="number"
-                className="border-hairline rounded-md border px-3 py-2"
+                className={inputClass}
                 value={draft.since ?? ""}
                 onChange={(e) =>
                   setDraft({
@@ -159,7 +175,7 @@ export function SponsorsManager() {
               <span className="text-caption-strong text-ink">Order (lower sorts first)</span>
               <input
                 type="number"
-                className="border-hairline rounded-md border px-3 py-2"
+                className={inputClass}
                 value={draft.order}
                 onChange={(e) => setDraft({ ...draft, order: Number(e.target.value) })}
               />
@@ -175,7 +191,7 @@ export function SponsorsManager() {
             <label className="flex flex-col gap-1 md:col-span-2">
               <span className="text-caption-strong text-ink">Blurb</span>
               <input
-                className="border-hairline rounded-md border px-3 py-2"
+                className={inputClass}
                 value={draft.blurb ?? ""}
                 onChange={(e) => setDraft({ ...draft, blurb: e.target.value })}
               />
@@ -188,13 +204,20 @@ export function SponsorsManager() {
               />
             </div>
           </div>
-          <div className="mt-6 flex gap-3">
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? "Saving…" : "Save"}
-            </Button>
-            <Button variant="secondary" onClick={() => setEditingId(null)} disabled={saving}>
-              Cancel
-            </Button>
+          <div className="border-hairline-soft mt-6 flex flex-col gap-3 border-t pt-5 sm:flex-row sm:items-center">
+            <div className="flex gap-3">
+              <Button onClick={handleSave} disabled={saveState === "saving"}>
+                {saveState === "saving" ? "Saving…" : "Save"}
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => setEditingId(null)}
+                disabled={saveState === "saving"}
+              >
+                Cancel
+              </Button>
+            </div>
+            <SaveStatus state={saveState} savedLabel="Sponsor saved." errorText={saveError} />
           </div>
         </Card>
       ) : null}

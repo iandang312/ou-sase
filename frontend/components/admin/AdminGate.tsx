@@ -14,13 +14,24 @@
  */
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Container, Section } from "@/components/ui/Layout";
 import { Card } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { useAuth, isFirebaseConfigured } from "@/lib/useAuth";
 
+const NAV_ITEMS = [
+  { href: "/admin", label: "Overview" },
+  { href: "/admin/members", label: "Members" },
+  { href: "/admin/sponsors", label: "Sponsors" },
+  { href: "/admin/photos", label: "Event photos" },
+  { href: "/admin/execs", label: "Officers" },
+] as const;
+
 export function AdminGate({ children }: { children: ReactNode }) {
   const { user, exec, loading, isAuthorized, signOut } = useAuth();
+  const pathname = usePathname();
 
   if (!isFirebaseConfigured) {
     return (
@@ -86,35 +97,59 @@ export function AdminGate({ children }: { children: ReactNode }) {
   }
 
   return (
-    <Section tone="soft" className="min-h-[60vh]">
-      <Container>
-        <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <p className="text-caption-strong text-muted uppercase tracking-[0.08em]">Admin</p>
-            <h1 className="font-display text-title-lg text-ink">
-              Welcome, {exec?.displayName || user.email}
-            </h1>
+    <div className="min-h-[70vh]">
+      <div className="border-hairline bg-surface-card border-b">
+        <Container className="flex flex-wrap items-center justify-between gap-3 py-4">
+          <div className="min-w-0">
+            <p className="text-caption-strong text-muted uppercase tracking-[0.08em]">
+              OU SASE admin
+            </p>
+            <p className="text-body-sm text-body truncate">
+              Signed in as <span className="text-ink font-semibold">{exec?.displayName || user.email}</span>
+              {exec?.role ? (
+                <Badge tone="brand" className="ml-2 align-middle">
+                  {exec.role}
+                </Badge>
+              ) : null}
+            </p>
           </div>
-          <nav aria-label="Admin sections" className="flex flex-wrap items-center gap-2">
-            <Link href="/admin" className="text-body-md text-brand-ink hover:underline">
-              Overview
-            </Link>
-            <Link href="/admin/members" className="text-body-md text-brand-ink hover:underline">
-              Members
-            </Link>
-            <Link href="/admin/sponsors" className="text-body-md text-brand-ink hover:underline">
-              Sponsors
-            </Link>
-            <Link href="/admin/photos" className="text-body-md text-brand-ink hover:underline">
-              Event photos
-            </Link>
-            <Button variant="text" onClick={() => signOut()}>
-              Sign out
-            </Button>
+          <Button variant="secondary" size="md" onClick={() => signOut()}>
+            Sign out
+          </Button>
+        </Container>
+      </div>
+
+      <div className="border-hairline bg-surface-soft border-b">
+        <Container>
+          <nav
+            aria-label="Admin sections"
+            className="-mb-px flex flex-wrap gap-1 overflow-x-auto py-1"
+          >
+            {NAV_ITEMS.map((item) => {
+              const active =
+                item.href === "/admin" ? pathname === "/admin" : pathname?.startsWith(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  aria-current={active ? "page" : undefined}
+                  className={`text-body-sm whitespace-nowrap rounded-t-md border-b-2 px-3 py-2.5 font-medium transition-colors ${
+                    active
+                      ? "border-brand-ink text-brand-ink"
+                      : "text-muted hover:text-ink border-transparent"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
           </nav>
-        </div>
-        {children}
-      </Container>
-    </Section>
+        </Container>
+      </div>
+
+      <Section tone="soft" className="pt-6">
+        <Container>{children}</Container>
+      </Section>
+    </div>
   );
 }

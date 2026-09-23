@@ -34,7 +34,6 @@ yarn-error.log*
 .env*
 # ...but the TEMPLATE must be committed: HANDOFF.md tells the next officer to
 # copy it to .env.local. It holds key NAMES only, never values.
-!.env.example
 
 # vercel
 .vercel
@@ -42,3 +41,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Must stay AFTER every .env* rule: the template is committed on purpose.
+!.env.example
