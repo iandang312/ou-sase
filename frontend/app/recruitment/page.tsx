@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { ButtonLink } from "@/components/ui/Button";
 import { Container, Section, SectionHeading } from "@/components/ui/Layout";
+import { Reveal, RevealGroup } from "@/components/ui/Reveal";
 import { RecruitmentBrowser } from "@/components/recruitment/RecruitmentBrowser";
 import { SAMPLE_MEMBERS } from "@/components/recruitment/sampleMembers";
 import { listVisibleMembers } from "@/lib/firestore";
 import { SHOW_PLACEHOLDER_DATA } from "@/lib/placeholders";
+import type { Member } from "@/lib/types";
 
 /**
  * Re-render from Firestore at most once a minute.
@@ -22,17 +24,39 @@ export const metadata: Metadata = {
     "Browse OU SASE members who have opted in to be seen by recruiters — majors, skills, and resumes for engineering and science talent at the University of Oklahoma.",
 };
 
+/** Three quick-scan numbers for the hero. Derived from the SAME already
+ * privacy-filtered list rendered below — never a wider query. */
+function heroStats(members: Member[]) {
+  const majorCount = new Set(members.map((m) => m.major)).size;
+  const seekingSoon = members.filter(
+    (m) => m.seeking.includes("Internship") || m.seeking.includes("Co-op"),
+  ).length;
+  return [
+    { value: members.length, label: members.length === 1 ? "Member visible" : "Members visible" },
+    { value: majorCount, label: majorCount === 1 ? "Major represented" : "Majors represented" },
+    { value: seekingSoon, label: "Seeking an internship or co-op" },
+  ];
+}
+
 export default async function RecruitmentPage(_props: PageProps<"/recruitment">) {
   const visibleMembers = await listVisibleMembers();
   // Sample members are fictional people. Build-time convenience only —
   // publishing invented students to recruiters would be indefensible.
   const usingSampleData = visibleMembers.length === 0 && SHOW_PLACEHOLDER_DATA;
   const members = usingSampleData ? SAMPLE_MEMBERS : visibleMembers;
+  const stats = heroStats(members);
 
   return (
     <>
-      <Section tone="light">
-        <Container>
+      <Section tone="light" className="relative overflow-hidden">
+        {/* Soft tinted wash behind the hero for depth, per DESIGN.md "Hero
+            bands". Decorative only: aria-hidden, no pointer events, and it
+            never touches text contrast since nothing sits inside it. */}
+        <div
+          aria-hidden="true"
+          className="bg-pastel-blue-soft pointer-events-none absolute -right-24 -top-40 h-96 w-96 rounded-full blur-3xl"
+        />
+        <Container className="relative">
           <SectionHeading
             kicker="For recruiters"
             title="Meet OU SASE's talent pipeline"
@@ -44,11 +68,24 @@ export default async function RecruitmentPage(_props: PageProps<"/recruitment">)
               publish their own.
             </p>
           ) : null}
-          <div className="mt-6">
+          <Reveal as="div" className="mt-6">
             <ButtonLink href="mailto:sase@ou.edu" variant="primary">
               Contact the chapter
             </ButtonLink>
-          </div>
+          </Reveal>
+
+          {members.length > 0 ? (
+            <div className="border-hairline mt-8 grid grid-cols-3 gap-6 border-t pt-6 sm:gap-10">
+              <RevealGroup as="div">
+                {stats.map((stat) => (
+                  <div key={stat.label} className="flex flex-col gap-1">
+                    <span className="font-mono text-display-sm text-ink">{stat.value}</span>
+                    <span className="text-caption text-muted">{stat.label}</span>
+                  </div>
+                ))}
+              </RevealGroup>
+            </div>
+          ) : null}
         </Container>
       </Section>
 

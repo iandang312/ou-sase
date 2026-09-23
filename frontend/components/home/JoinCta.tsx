@@ -1,5 +1,6 @@
 import { ButtonLink } from "@/components/ui/Button";
 import { Container, Section } from "@/components/ui/Layout";
+import { Reveal } from "@/components/ui/Reveal";
 import { SquiggleRails } from "@/components/site/SquiggleRails";
 
 /** Closing dark band: one CTA for students, one for recruiters. */
@@ -15,7 +16,7 @@ export function JoinCta() {
       />
       <SquiggleRails tone="white" />
       <Container>
-        <div className="mx-auto flex max-w-[720px] flex-col items-center gap-5 text-center">
+        <Reveal className="mx-auto flex max-w-[720px] flex-col items-center gap-5 text-center">
           <h2 className="font-display text-display-sm md:text-display-md text-on-dark">
             Come build with us
           </h2>
@@ -31,7 +32,7 @@ export function JoinCta() {
               Recruiters, contact us
             </ButtonLink>
           </div>
-        </div>
+        </Reveal>
       </Container>
     </Section>
   );

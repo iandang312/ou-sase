@@ -1,11 +1,16 @@
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { CloudImage } from "@/components/site/CloudImage";
+import { CLASSIFICATION_BADGE_TONE } from "@/components/recruitment/classificationStyles";
 import { SEEKING_BADGE_TONE } from "@/components/recruitment/seekingStyles";
 import type { Member } from "@/lib/types";
 
 const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
 const MAX_SKILLS = 6;
+
+/** Footer links get a soft pastel-blue pill on hover/focus so they read as targets. */
+const FOOTER_LINK_CLASS =
+  "text-brand-ink -mx-2 -my-1 inline-flex items-center gap-1.5 rounded-pill px-2 py-1 font-semibold transition-colors duration-150 hover:bg-pastel-blue-soft focus-visible:bg-pastel-blue-soft";
 
 /** Raw Cloudinary delivery URL for a resume PDF, or null if it can't be built. */
 function resumeUrl(member: Member): string | null {
@@ -46,22 +51,26 @@ export function MemberCard({ member }: { member: Member }) {
   const hiddenSkillCount = member.skills.length - skills.length;
 
   return (
-    <Card className="flex h-full flex-col gap-3">
+    <Card
+      interactive
+      className="group flex h-full flex-col gap-3 transition-transform duration-200 ease-out hover:-translate-y-1 focus-within:-translate-y-1"
+    >
       <div className="flex items-start gap-4">
         <CloudImage
           publicId={member.photoPublicId}
           alt={`Photo of ${fullName}`}
           width={64}
           height={64}
-          className="h-16 w-16 shrink-0 rounded-lg object-cover"
+          className="border-hairline h-16 w-16 shrink-0 rounded-full border object-cover"
         />
         <div className="min-w-0">
           <h3 className="text-title-sm text-ink truncate">{fullName}</h3>
           <p className="text-body-sm text-body truncate">{member.major}</p>
-          <p className="text-caption text-muted">
-            <span>{member.classification}</span>
-            <span aria-hidden="true"> &middot; </span>
-            <span>Class of {member.gradYear}</span>
+          <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-caption text-muted">
+            <Badge tone={CLASSIFICATION_BADGE_TONE[member.classification]}>
+              {member.classification}
+            </Badge>
+            <span className="font-mono text-muted">Class of {member.gradYear}</span>
           </p>
         </div>
       </div>
@@ -101,7 +110,7 @@ export function MemberCard({ member }: { member: Member }) {
             href={resume}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-brand-ink inline-flex items-center gap-1.5 font-semibold hover:underline underline-offset-4"
+            className={FOOTER_LINK_CLASS}
           >
             <DocumentIcon />
             Resume
@@ -117,7 +126,7 @@ export function MemberCard({ member }: { member: Member }) {
             href={member.linkedinUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-brand-ink inline-flex items-center gap-1.5 font-semibold hover:underline underline-offset-4"
+            className={FOOTER_LINK_CLASS}
           >
             <ExternalLinkIcon />
             LinkedIn
@@ -128,7 +137,7 @@ export function MemberCard({ member }: { member: Member }) {
             href={member.githubUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-brand-ink inline-flex items-center gap-1.5 font-semibold hover:underline underline-offset-4"
+            className={FOOTER_LINK_CLASS}
           >
             <ExternalLinkIcon />
             GitHub
@@ -139,7 +148,7 @@ export function MemberCard({ member }: { member: Member }) {
             href={member.portfolioUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-brand-ink inline-flex items-center gap-1.5 font-semibold hover:underline underline-offset-4"
+            className={FOOTER_LINK_CLASS}
           >
             <ExternalLinkIcon />
             Portfolio

@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { CloudImage } from "@/components/site/CloudImage";
 import { SquiggleRails } from "@/components/site/SquiggleRails";
+import { Reveal, RevealGroup } from "@/components/ui/Reveal";
 import { listSponsors } from "@/lib/firestore";
 import { SPONSOR_TIERS, type Sponsor, type SponsorTier } from "@/lib/types";
 import { SAMPLE_SPONSORS } from "@/components/sponsors/sampleSponsors";
@@ -54,12 +55,33 @@ const LOGO_SIZE: Record<SponsorTier, { width: number; height: number }> = {
 };
 
 /* One pastel per tier — the tiers are the one place in the site where the
-   secondary palette is allowed to run as a set. */
-const TIER_BADGE_TONE: Record<SponsorTier, "brand" | "yellow" | "lavender" | "neutral"> = {
+   secondary palette is allowed to run as a set (DESIGN.md "How much color").
+   Lavender = prestige, yellow = attention, blue = neutral default, peach =
+   warmth/community — kept identical across badge, card wash and the tier
+   comparison table so a color always means the same tier everywhere. */
+const TIER_BADGE_TONE: Record<SponsorTier, "brand" | "yellow" | "lavender" | "peach"> = {
   Platinum: "lavender",
   Gold: "yellow",
   Silver: "brand",
-  Partner: "neutral",
+  Partner: "peach",
+};
+
+/** Soft wash behind each sponsor card — same family as its badge. */
+const TIER_CARD_BG: Record<SponsorTier, string> = {
+  Platinum: "bg-pastel-lavender-soft",
+  Gold: "bg-pastel-yellow-soft",
+  Silver: "bg-pastel-blue-soft",
+  Partner: "bg-pastel-peach-soft",
+};
+
+/* Bento-ish rhythm: Platinum tiles are large and few per row, tapering down
+   to a dense roster grid for Partner. Makes rank legible from layout alone,
+   not just the badge label. */
+const TIER_GRID_COLS: Record<SponsorTier, string> = {
+  Platinum: "grid-cols-1 sm:grid-cols-2",
+  Gold: "grid-cols-2 sm:grid-cols-3",
+  Silver: "grid-cols-2 sm:grid-cols-3 md:grid-cols-4",
+  Partner: "grid-cols-2 sm:grid-cols-3 md:grid-cols-4",
 };
 
 export default async function SponsorsPage(_props: PageProps<"/sponsors">) {
@@ -140,7 +162,7 @@ export default async function SponsorsPage(_props: PageProps<"/sponsors">) {
               if (!tierSponsors || tierSponsors.length === 0) return null;
               const logoSize = LOGO_SIZE[tier];
               return (
-                <div key={tier} className="flex flex-col gap-6">
+                <Reveal key={tier} className="flex flex-col gap-6">
                   <div className="flex items-baseline gap-3">
                     <Badge tone={TIER_BADGE_TONE[tier]}>
                       {SPONSOR_TIERS[tier].label}
@@ -149,30 +171,53 @@ export default async function SponsorsPage(_props: PageProps<"/sponsors">) {
                       {SPONSOR_TIERS[tier].blurb}
                     </span>
                   </div>
-                  <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4">
-                    {tierSponsors.map((sponsor) => (
-                      <Card key={sponsor.id} className="flex flex-col items-center gap-4 text-center">
-                        <CloudImage
-                          publicId={sponsor.logoPublicId}
-                          alt={`${sponsor.name} logo`}
-                          width={logoSize.width}
-                          height={logoSize.height}
-                          className="w-full rounded-sm object-contain"
-                        />
-                        <div className="flex flex-col gap-1">
-                          <span className="text-title-sm text-ink">
-                            {sponsor.name}
-                          </span>
-                          {sponsor.blurb ? (
-                            <span className="text-caption text-muted">
-                              {sponsor.blurb}
-                            </span>
-                          ) : null}
-                        </div>
-                      </Card>
-                    ))}
+                  <div className={`grid gap-6 ${TIER_GRID_COLS[tier]}`}>
+                    <RevealGroup>
+                      {tierSponsors.map((sponsor) => {
+                        const content = (
+                          <Card
+                            interactive
+                            className={`flex h-full flex-col items-center gap-4 text-center transition-transform duration-base ease-standard hover:-translate-y-1 focus-within:-translate-y-1 ${TIER_CARD_BG[tier]}`}
+                          >
+                            <CloudImage
+                              publicId={sponsor.logoPublicId}
+                              alt={`${sponsor.name} logo`}
+                              width={logoSize.width}
+                              height={logoSize.height}
+                              className="w-full rounded-sm object-contain"
+                            />
+                            <div className="flex flex-col gap-1">
+                              <span className="text-title-sm text-ink">
+                                {sponsor.name}
+                              </span>
+                              {sponsor.blurb ? (
+                                <span className="text-caption text-muted">
+                                  {sponsor.blurb}
+                                </span>
+                              ) : null}
+                            </div>
+                          </Card>
+                        );
+                        return sponsor.websiteUrl ? (
+                          <a
+                            key={sponsor.id}
+                            href={sponsor.websiteUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block h-full rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-ink focus-visible:ring-offset-2"
+                            aria-label={`Visit ${sponsor.name}'s website`}
+                          >
+                            {content}
+                          </a>
+                        ) : (
+                          <div key={sponsor.id} className="h-full">
+                            {content}
+                          </div>
+                        );
+                      })}
+                    </RevealGroup>
                   </div>
-                </div>
+                </Reveal>
               );
             })}
           </div>
@@ -187,46 +232,57 @@ export default async function SponsorsPage(_props: PageProps<"/sponsors">) {
             title="Three reasons companies partner with us"
           />
           <div className="mt-12 grid gap-6 md:grid-cols-3">
-            <Card>
-              <span className="text-caption-strong uppercase tracking-[0.08em] text-brand-ink">
-                Talent pipeline
-              </span>
-              <h3 className="mt-3 font-display text-title-lg text-ink">
-                Direct access to engineers ready to intern and hire.
-              </h3>
-              <p className="mt-3 text-body-md text-body">
-                Meet students across engineering, computer science, and
-                the physical sciences before they hit the general applicant
-                pool — through resume workshops, socials, and info sessions.
-              </p>
-            </Card>
-            <Card>
-              <span className="text-caption-strong uppercase tracking-[0.08em] text-brand-ink">
-                Brand on campus
-              </span>
-              <h3 className="mt-3 font-display text-title-lg text-ink">
-                Visibility with OU’s engineering community all year.
-              </h3>
-              <p className="mt-3 text-body-md text-body">
-                Your logo and presence show up at general body meetings,
-                socials, and on this site — consistent exposure, not a
-                one-day career fair booth.
-              </p>
-            </Card>
-            <Card>
-              <span className="text-caption-strong uppercase tracking-[0.08em] text-brand-ink">
-                Community impact
-              </span>
-              <h3 className="mt-3 font-display text-title-lg text-ink">
-                Support belonging for Asian American &amp; Pacific
-                Islander students in STEM.
-              </h3>
-              <p className="mt-3 text-body-md text-body">
-                SASE builds community and professional development for a
-                group historically underrepresented in engineering
-                leadership. Your sponsorship funds that directly.
-              </p>
-            </Card>
+            <RevealGroup>
+              <Card
+                interactive
+                className="bg-pastel-mint-soft transition-transform duration-base ease-standard hover:-translate-y-1 focus-within:-translate-y-1"
+              >
+                <span className="text-caption-strong uppercase tracking-[0.08em] text-pastel-mint-ink">
+                  Talent pipeline
+                </span>
+                <h3 className="mt-3 font-display text-title-lg text-ink">
+                  Direct access to engineers ready to intern and hire.
+                </h3>
+                <p className="mt-3 text-body-md text-body">
+                  Meet students across engineering, computer science, and
+                  the physical sciences before they hit the general applicant
+                  pool — through resume workshops, socials, and info sessions.
+                </p>
+              </Card>
+              <Card
+                interactive
+                className="bg-pastel-blue-soft transition-transform duration-base ease-standard hover:-translate-y-1 focus-within:-translate-y-1"
+              >
+                <span className="text-caption-strong uppercase tracking-[0.08em] text-brand-ink">
+                  Brand on campus
+                </span>
+                <h3 className="mt-3 font-display text-title-lg text-ink">
+                  Visibility with OU’s engineering community all year.
+                </h3>
+                <p className="mt-3 text-body-md text-body">
+                  Your logo and presence show up at general body meetings,
+                  socials, and on this site — consistent exposure, not a
+                  one-day career fair booth.
+                </p>
+              </Card>
+              <Card
+                interactive
+                className="bg-pastel-peach-soft transition-transform duration-base ease-standard hover:-translate-y-1 focus-within:-translate-y-1"
+              >
+                <span className="text-caption-strong uppercase tracking-[0.08em] text-pastel-peach-ink">
+                  Community impact
+                </span>
+                <h3 className="mt-3 font-display text-title-lg text-ink">
+                  Support belonging for Asian American &amp; Pacific
+                  Islander students in STEM.
+                </h3>
+                <p className="mt-3 text-body-md text-body">
+                  SASE builds community and professional development for a
+                  group historically underrepresented in engineering
+                  leadership. Your sponsorship funds that directly.
+                </p>
+              </Card>
+            </RevealGroup>
           </div>
         </Container>
       </Section>
@@ -239,56 +295,80 @@ export default async function SponsorsPage(_props: PageProps<"/sponsors">) {
             title="What each tier includes"
             sub="Every tier is customizable — reach out and we'll build a package around your goals."
           />
-          <div className="mt-12 grid gap-6 md:grid-cols-4">
-            <Card>
-              <Badge tone="neutral">Partner</Badge>
-              <p className="mt-4 text-title-md text-ink">
-                {/* TODO: Huy — confirm pricing */}
-                Community tier
-              </p>
-              <ul className="mt-4 flex flex-col gap-2 text-body-sm text-body">
-                <li>Logo on website</li>
-                <li>Social media shoutout</li>
-              </ul>
-            </Card>
-            <Card>
-              <Badge tone="neutral">Silver</Badge>
-              <p className="mt-4 text-title-md text-ink">
-                {/* TODO: Huy — confirm pricing */}
-                Supporting tier
-              </p>
-              <ul className="mt-4 flex flex-col gap-2 text-body-sm text-body">
-                <li>Everything in Partner</li>
-                <li>Logo at general body meetings</li>
-                <li>Newsletter mention</li>
-              </ul>
-            </Card>
-            <Card tone="dark" className="md:scale-105 md:shadow-xl">
-              <Badge tone="onDark">Gold — most popular</Badge>
-              <p className="mt-4 text-title-md text-on-dark">
-                {/* TODO: Huy — confirm pricing */}
-                Career partner tier
-              </p>
-              <ul className="mt-4 flex flex-col gap-2 text-body-sm text-on-dark-soft">
-                <li>Everything in Silver</li>
-                <li>Host a workshop or info session</li>
-                <li>Resume book access</li>
-                <li>Priority table at career fair socials</li>
-              </ul>
-            </Card>
-            <Card>
-              <Badge tone="lavender">Platinum</Badge>
-              <p className="mt-4 text-title-md text-ink">
-                {/* TODO: Huy — confirm pricing */}
-                Presenting partner tier
-              </p>
-              <ul className="mt-4 flex flex-col gap-2 text-body-sm text-body">
-                <li>Everything in Gold</li>
-                <li>Presenting sponsor of the annual banquet</li>
-                <li>Featured logo placement, largest size</li>
-                <li>First right of refusal to renew</li>
-              </ul>
-            </Card>
+          {/* Bento: Platinum runs twice as wide as Partner/Silver, and Gold
+              is the one tier featured on a dark card — rank reads from the
+              layout itself, not just the badge. */}
+          <div className="mt-12 grid gap-6 md:grid-cols-5">
+            <Reveal className="md:col-span-2" delay={0}>
+              <Card
+                interactive
+                className="h-full bg-pastel-lavender-soft transition-transform duration-base ease-standard hover:-translate-y-1 focus-within:-translate-y-1 md:p-10"
+              >
+                <Badge tone="lavender">Platinum — presenting partner</Badge>
+                <p className="mt-5 font-display text-title-lg text-ink">
+                  {/* TODO: Huy — confirm pricing */}
+                  Presenting partner tier
+                </p>
+                <ul className="mt-4 grid gap-2 text-body-sm text-body sm:grid-cols-2">
+                  <li>Everything in Gold</li>
+                  <li>Presenting sponsor of the annual banquet</li>
+                  <li>Featured logo placement, largest size</li>
+                  <li>First right of refusal to renew</li>
+                </ul>
+              </Card>
+            </Reveal>
+            <Reveal delay={70}>
+              <Card
+                tone="dark"
+                interactive
+                className="h-full transition-transform duration-base ease-standard hover:-translate-y-1 focus-within:-translate-y-1 md:scale-105 md:shadow-xl"
+              >
+                <Badge tone="yellow">Gold — most popular</Badge>
+                <p className="mt-4 text-title-md text-on-dark">
+                  {/* TODO: Huy — confirm pricing */}
+                  Career partner tier
+                </p>
+                <ul className="mt-4 flex flex-col gap-2 text-body-sm text-on-dark-soft">
+                  <li>Everything in Silver</li>
+                  <li>Host a workshop or info session</li>
+                  <li>Resume book access</li>
+                  <li>Priority table at career fair socials</li>
+                </ul>
+              </Card>
+            </Reveal>
+            <Reveal delay={140}>
+              <Card
+                interactive
+                className="h-full bg-pastel-blue-soft transition-transform duration-base ease-standard hover:-translate-y-1 focus-within:-translate-y-1"
+              >
+                <Badge tone="brand">Silver</Badge>
+                <p className="mt-4 text-title-md text-ink">
+                  {/* TODO: Huy — confirm pricing */}
+                  Supporting tier
+                </p>
+                <ul className="mt-4 flex flex-col gap-2 text-body-sm text-body">
+                  <li>Everything in Partner</li>
+                  <li>Logo at general body meetings</li>
+                  <li>Newsletter mention</li>
+                </ul>
+              </Card>
+            </Reveal>
+            <Reveal delay={210}>
+              <Card
+                interactive
+                className="h-full bg-pastel-peach-soft transition-transform duration-base ease-standard hover:-translate-y-1 focus-within:-translate-y-1"
+              >
+                <Badge tone="peach">Partner</Badge>
+                <p className="mt-4 text-title-md text-ink">
+                  {/* TODO: Huy — confirm pricing */}
+                  Community tier
+                </p>
+                <ul className="mt-4 flex flex-col gap-2 text-body-sm text-body">
+                  <li>Logo on website</li>
+                  <li>Social media shoutout</li>
+                </ul>
+              </Card>
+            </Reveal>
           </div>
         </Container>
       </Section>

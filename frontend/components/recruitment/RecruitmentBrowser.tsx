@@ -8,6 +8,7 @@ import {
   SEEKING_SOFT_CLASS,
   type Seeking,
 } from "@/components/recruitment/seekingStyles";
+import { Reveal, RevealGroup } from "@/components/ui/Reveal";
 import type { Member } from "@/lib/types";
 
 const ALL = "all";
@@ -95,7 +96,7 @@ export function RecruitmentBrowser({ members }: { members: Member[] }) {
 
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <Reveal as="div" className="flex flex-wrap items-center justify-between gap-3">
         <p aria-live="polite" className="text-body-md text-ink">
           <span className="text-title-md font-semibold">{filtered.length}</span>{" "}
           <span className="text-body">
@@ -116,7 +117,7 @@ export function RecruitmentBrowser({ members }: { members: Member[] }) {
             </span>
           ) : null}
         </button>
-      </div>
+      </Reveal>
 
       <div id={filtersPanelId} className={`${filtersOpen ? "" : "hidden"} mt-4 sm:mt-4 sm:block`}>
         <form
@@ -190,7 +191,7 @@ export function RecruitmentBrowser({ members }: { members: Member[] }) {
                     type="button"
                     aria-pressed={isActive}
                     onClick={() => setSeeking(isActive ? ALL : opt)}
-                    className={`rounded-pill border px-3 py-1.5 text-caption-strong font-semibold transition-colors ${
+                    className={`rounded-pill border px-3 py-1.5 text-caption-strong font-semibold transition-[color,background-color,border-color,transform] duration-150 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 ${
                       isActive
                         ? `${SEEKING_FILL_CLASS[opt]} border-transparent`
                         : `${SEEKING_SOFT_CLASS[opt]} border-transparent hover:border-brand-ink/40`
@@ -212,7 +213,7 @@ export function RecruitmentBrowser({ members }: { members: Member[] }) {
               key={f.key}
               type="button"
               onClick={f.clear}
-              className="bg-surface-strong text-ink inline-flex items-center gap-1.5 rounded-pill py-1 pl-3 pr-2 text-caption-strong"
+              className="bg-surface-strong text-ink inline-flex items-center gap-1.5 rounded-pill py-1 pl-3 pr-2 text-caption-strong transition-colors duration-150 hover:bg-pastel-blue-soft hover:text-brand-ink"
             >
               {f.label}
               <FilterCrossIcon />
@@ -249,11 +250,19 @@ export function RecruitmentBrowser({ members }: { members: Member[] }) {
         </div>
       ) : (
         <ul className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((member) => (
-            <li key={member.id}>
-              <MemberCard member={member} />
-            </li>
-          ))}
+          {/* RevealGroup keys each <li> by its POSITION in `filtered`, not by
+              member id. That's deliberate: when a filter changes the set or
+              order, an already-shown slot keeps its `shown` state (its
+              content just swaps), so the grid does not replay its entrance
+              animation on every filter click — only a slot that is newly
+              rendered (the list grew) reveals itself. See DESIGN.md "Scroll
+              animation" rule 1 (reveal once) and the brief's explicit
+              warning against re-animating a filterable grid. */}
+          <RevealGroup as="li" className="min-w-0">
+            {filtered.map((member) => (
+              <MemberCard key={member.id} member={member} />
+            ))}
+          </RevealGroup>
         </ul>
       )}
     </div>

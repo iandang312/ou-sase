@@ -1,5 +1,6 @@
 import { ButtonLink } from "@/components/ui/Button";
 import { Section, Container } from "@/components/ui/Layout";
+import { Reveal } from "@/components/ui/Reveal";
 import { SquiggleRails } from "@/components/site/SquiggleRails";
 
 /**
@@ -13,10 +14,17 @@ export function Hero() {
       {/* Ambient wash behind the type. A fill token, not text — stays inside
           the pastel rule — softened with blur so it reads as light, not a
           shape. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute left-1/2 top-[-220px] h-[480px] w-[820px] -translate-x-1/2 rounded-full bg-pastel-blue-soft/80 blur-3xl"
-      />
+      <Reveal className="pointer-events-none absolute left-1/2 top-[-220px] h-[480px] w-[820px] -translate-x-1/2">
+        <div aria-hidden className="h-full w-full rounded-full bg-pastel-blue-soft/80 blur-3xl" />
+      </Reveal>
+      {/* Small peach accent — the one secondary family this hero permits,
+          per DESIGN.md's two-families-per-component ceiling. */}
+      <Reveal
+        delay={120}
+        className="pointer-events-none absolute right-[8%] top-16 hidden h-40 w-40 md:block"
+      >
+        <div aria-hidden className="h-full w-full rounded-full bg-pastel-peach-soft/70 blur-2xl" />
+      </Reveal>
       <SquiggleRails tone="blue" />
       <Container>
         <div className="relative mx-auto flex max-w-[860px] flex-col items-center gap-7 text-center">

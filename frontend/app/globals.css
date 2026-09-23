@@ -179,6 +179,54 @@
 }
 
 /* ---------------------------------------------------------------------------
+   Motion tokens + scroll-reveal primitive
+   See DESIGN.md "Motion & Interaction". Animate transform and opacity only:
+   both are compositor-friendly. Animating width/height/top forces layout on
+   every frame and stutters on the mid-range phones most students carry.
+   --------------------------------------------------------------------------- */
+:root {
+  --duration-instant: 120ms;
+  --duration-fast: 180ms;
+  --duration-base: 240ms;
+  --duration-slow: 320ms;
+  --duration-reveal: 520ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-entrance: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --reveal-offset: 16px;
+}
+
+/* Scroll reveal. An element opts in with data-reveal; the Reveal component
+   flips it to data-reveal="shown" once, the first time it scrolls into view. */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(var(--reveal-offset));
+  transition:
+    opacity var(--duration-reveal) var(--ease-entrance),
+    transform var(--duration-reveal) var(--ease-entrance);
+  transition-delay: var(--reveal-delay, 0ms);
+  will-change: opacity, transform;
+}
+
+[data-reveal="shown"] {
+  opacity: 1;
+  transform: none;
+  will-change: auto;
+}
+
+/* Reduced motion means content arrives INSTANTLY, never that it never
+   arrives. Without this the global reduce block would zero the transition
+   while opacity stayed 0, hiding the page from the people who need it most. */
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal],
+  [data-reveal="shown"] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
    Base
    DESIGN.md is a light-canvas system. We do NOT ship a prefers-color-scheme
    dark flip: the dark surfaces are editorial bands chosen per-section, not a

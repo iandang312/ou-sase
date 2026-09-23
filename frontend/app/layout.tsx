@@ -43,6 +43,16 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${inter.variable} ${interDisplay.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        {/*
+          Scroll-reveal elements start at opacity 0 and are revealed by JS.
+          With JS disabled that would hide the entire page, so unhide them
+          here. DESIGN.md: a missing animation must never mean missing content.
+        */}
+        <noscript>
+          <style>{`[data-reveal]{opacity:1 !important;transform:none !important}`}</style>
+        </noscript>
+      </head>
       <body className="bg-canvas text-ink flex min-h-full flex-col">
         <a
           href="#main"
