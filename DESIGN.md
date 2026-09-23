@@ -603,6 +603,83 @@ survives mobile is not finished.
 
 ---
 
+## Proposed Directions
+
+Research notes from September 2026 on how production sites handle animation,
+3D and distinctive layouts, filtered for this site. **These are proposals, not
+the system.** When one is adopted, move it into the relevant section above and
+delete it here. Browser-support figures are from caniuse at the time of writing;
+re-check before relying on a borderline feature.
+
+The site currently ships no animation library; everything above is CSS plus
+`IntersectionObserver`. Keep that default and add a dependency only when a
+specific interaction needs it.
+
+### Motion
+
+- **Page transitions: native View Transitions first.** Same-document view
+  transitions work in all three engines; Next.js has an official guide for
+  them. Unsupported browsers fall back to an instant navigation, so this is
+  safe to adopt progressively. Give the `::view-transition-*` pseudo-elements a
+  duration token and collapse them under reduced motion like everything else.
+- **CSS scroll-driven animations** (`animation-timeline: view()`) could replace
+  the `IntersectionObserver` reveal for simple fades (~87% support). Keep the
+  observer as the fallback until Firefox support is established, and keep rule
+  5 of Scroll animation: content visible if the effect never runs.
+- **Motion (`motion/react`, formerly Framer Motion)** is the library to reach
+  for if a component needs exit animations, shared-element `layoutId`
+  transitions or gestures, for example a card expanding into a detail view. Do
+  not add it for effects CSS already covers.
+- **GSAP** (fully free since April 2025, SplitText and ScrollTrigger included)
+  only if the site gains a pinned, scroll-scrubbed story section. Not justified
+  for reveals.
+- **Safe CSS to use now:** `@starting-style` with `transition-behavior:
+  allow-discrete` for entry transitions of popovers and dialogs; `linear()` for
+  custom spring-like easing tokens. **Not yet:** `calc-size()` /
+  `interpolate-size` are Chromium-only, so use them only behind `@supports` over
+  the `grid-template-rows: 0fr → 1fr` technique.
+
+### 3D and shaders
+
+- **At most one 3D moment, and only in a hero.** Good options: a subtle shader
+  gradient in the pastel families behind the dark hero band, or a single
+  Spline/Unicorn Studio embed. A full React Three Fiber scene is more bundle
+  and maintenance than a volunteer-run chapter site should carry.
+- **If adopted:** a client component loaded via `dynamic(..., { ssr: false })`,
+  never in the first-paint bundle. Cap pixel ratio at 2, pause rendering when
+  off-screen, and ship a static poster image that is also the reduced-motion
+  and no-WebGL state. Compress models with Draco or Meshopt and textures with
+  KTX2.
+- **WebGPU is not yet on by default in Firefox.** Three.js's WebGPU renderer
+  falls back to WebGL2 automatically, but plain WebGL is enough for a gradient.
+- If React Three Fiber is ever used, it must be v9; v8 is incompatible with
+  React 19.
+
+### Layout
+
+- **Add one distinctive layout element, not several.** The scatter/tabletop is
+  already the home-page signature. Other candidates: an editorial hero with
+  oversized `clamp()` display type, a bento events grid, or sticky stacking
+  cards for a "how to join" sequence.
+- **Subgrid in the bento and benefit grids** would align card titles, body copy
+  and CTAs across tiles without fixed heights. Supported in all current
+  engines.
+- **Popover API plus anchor positioning** for tooltips and small menus instead
+  of a JS positioning library. Anchor positioning became Baseline in January
+  2026, but support estimates vary (81–91%), so keep a centered or static
+  fallback.
+- **Native CSS masonry (`display: grid-lanes`) is Safari-only.** Photo galleries
+  stay on the filmstrip or a multi-column fallback.
+- **Avoid the generic component-library look.** Default shadcn-style output
+  (zinc neutrals, violet accent, Inter, default radius, purple-to-blue gradient)
+  is recognizable at a glance. This system already diverges through the pastel
+  trio rule and its type scale, so anything copied from shadcn/ui, Magic UI,
+  Aceternity UI or React Bits is re-tokened before it ships.
+- **Skip** command palettes, dock navs and draggable canvases on the public
+  site. They suit tools with many destinations, not an events-and-roster site.
+
+---
+
 ## Known Gaps
 
 - **No dark mode.** Dark surfaces are editorial bands, not a theme. Adding a
