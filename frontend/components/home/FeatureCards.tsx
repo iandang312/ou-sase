@@ -1,14 +1,16 @@
+"use client";
+
 import { Container, Section, SectionHeading } from "@/components/ui/Layout";
-import { RevealGroup } from "@/components/ui/Reveal";
+import { ScrollScene, SceneProgressBar, SceneStep } from "@/components/ui/ScrollScene";
 
 interface Feature {
   title: string;
   body: string;
   tag: string;
-  /** Pastel family leading this tile. Two families max per component. */
+  /** What the supporting visual on this beat says in one line. */
+  caption: string;
+  /** Pastel family leading this beat. Two families max per component. */
   tone: "blue" | "peach" | "mint";
-  /** Bento sizing: the anchor tile is large, the rest are supporting tiles. */
-  size: "anchor" | "support";
 }
 
 const FEATURES: Feature[] = [
@@ -16,22 +18,22 @@ const FEATURES: Feature[] = [
     title: "Professional development",
     body: "Resume workshops, mock interviews, and a straight line to recruiters who are actually hiring — built around what engineering and science recruiting looks like for us.",
     tag: "Careers",
+    caption: "Workshops, interviews, and warm intros",
     tone: "blue",
-    size: "anchor",
   },
   {
     title: "A community that gets it",
     body: "Study nights, socials, and a chapter of people who understand both the coursework grind and the identity questions nobody else on campus asks about.",
     tag: "Belonging",
+    caption: "Study nights and socials, every semester",
     tone: "peach",
-    size: "support",
   },
   {
     title: "Give back, on and off campus",
     body: "STEM outreach for younger students, cultural celebrations open to the whole OU community, and volunteer days that put the chapter's time where its values are.",
     tag: "Service",
+    caption: "Outreach, culture nights, and volunteer days",
     tone: "mint",
-    size: "support",
   },
 ];
 
@@ -41,10 +43,14 @@ const TONE_STYLES: Record<Feature["tone"], { wash: string; fill: string; ink: st
   mint: { wash: "bg-pastel-mint-soft", fill: "bg-pastel-mint", ink: "text-pastel-mint-ink" },
 };
 
+const STEP_COUNT = FEATURES.length;
+
 /**
- * Bento layout: one large anchor tile plus two smaller supporting tiles.
- * DESIGN.md "Layout patterns" — bento suits "what we do" content where items
- * carry unequal weight, and reads with far more personality than a flat 3-up.
+ * "Why SASE", told one pillar at a time. Each scroll beat brings its own
+ * tag, title, body copy and a supporting shape in the pillar's pastel
+ * family, so the reader takes in one idea before the next arrives instead
+ * of scanning three cards at once. Under reduced motion the beats stack in
+ * normal flow — same content, no scrubbing.
  */
 export function FeatureCards() {
   return (
@@ -59,45 +65,62 @@ export function FeatureCards() {
         <SectionHeading
           kicker="Why SASE"
           title="Built for Asian-heritage scientists and engineers at OU"
-          sub="SASE's national mission is simple: prepare us for success in the global business world, celebrate our diversity, and put that success to work for the community. Here's what that looks like at OU."
+          sub="SASE's national mission is simple: prepare us for success in the global business world, celebrate our diversity, and put that success to work for the community. Here's what that looks like at OU, one pillar at a time."
         />
-        <div className="mt-10 grid gap-5 md:mt-12 md:grid-cols-2 md:grid-rows-2">
-          <RevealGroup className="contents" step={70}>
-            {FEATURES.map((feature) => {
-              const tone = TONE_STYLES[feature.tone];
-              const isAnchor = feature.size === "anchor";
-              return (
-                <div
-                  key={feature.title}
-                  className={
-                    "group relative overflow-hidden rounded-xl border border-hairline bg-surface-card p-6 " +
-                    "transition-transform duration-base ease-standard hover:-translate-y-1 md:p-8 " +
-                    (isAnchor ? "md:row-span-2" : "")
-                  }
-                >
-                  <div
-                    aria-hidden
-                    className={`pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full ${tone.wash} blur-2xl transition-transform duration-slow ease-standard group-hover:scale-110`}
-                  />
+      </Container>
+
+      <ScrollScene length={3} className="mt-6 md:mt-10" stageClassName="pt-16">
+        <SceneProgressBar colorClass="bg-brand-ink/30" />
+        {FEATURES.map((feature, i) => {
+          const tone = TONE_STYLES[feature.tone];
+          const from = i / STEP_COUNT;
+          const to = (i + 1) / STEP_COUNT;
+          return (
+            <SceneStep
+              key={feature.title}
+              from={from}
+              to={to}
+              fade={0.07}
+              first={i === 0}
+              last={i === STEP_COUNT - 1}
+            >
+              <Container className="grid h-full items-center gap-6 md:grid-cols-2 md:gap-14">
+                <div className="flex flex-col items-start gap-3 md:gap-4">
+                  <span className="text-caption text-muted font-mono uppercase tracking-[0.08em]">
+                    {String(i + 1).padStart(2, "0")} / {String(STEP_COUNT).padStart(2, "0")}
+                  </span>
                   <span
-                    className={`relative inline-flex items-center rounded-pill px-3 py-1 text-caption-strong uppercase tracking-[0.06em] ${tone.fill} ${tone.ink}`}
+                    className={`inline-flex items-center rounded-pill px-3 py-1 text-caption-strong uppercase tracking-[0.06em] ${tone.fill} ${tone.ink}`}
                   >
                     {feature.tag}
                   </span>
-                  <h3
-                    className={`relative mt-4 text-ink ${isAnchor ? "text-title-lg" : "text-title-md"}`}
-                  >
-                    {feature.title}
-                  </h3>
-                  <p className="text-body-sm text-body relative mt-2 max-w-[48ch]">
-                    {feature.body}
-                  </p>
+                  <h3 className="text-title-lg text-ink">{feature.title}</h3>
+                  <p className="text-body-md text-body max-w-[48ch]">{feature.body}</p>
                 </div>
-              );
-            })}
-          </RevealGroup>
-        </div>
-      </Container>
+
+                {/* Supporting visual: a pastel plate with the beat's caption
+                    — a shape, not a photo, so it stays decorative. Hidden on
+                    phones so a beat's text never has to compete with it for
+                    the limited height inside the sticky stage. */}
+                <div className="relative mx-auto hidden h-56 w-full max-w-sm items-center justify-center md:flex md:h-72">
+                  <div
+                    aria-hidden
+                    className={`absolute h-48 w-48 rounded-full ${tone.wash} blur-xl md:h-60 md:w-60`}
+                  />
+                  <div
+                    aria-hidden
+                    className={`relative flex h-40 w-40 flex-col items-center justify-center gap-2 rounded-xl border border-hairline bg-surface-card p-6 text-center shadow-[0_1px_2px_rgba(10,11,13,0.06)] md:h-48 md:w-48`}
+                  >
+                    <span className={`h-3 w-16 rounded-pill ${tone.fill}`} />
+                    <span className={`h-3 w-10 rounded-pill ${tone.fill}`} />
+                    <p className="text-caption text-muted mt-2">{feature.caption}</p>
+                  </div>
+                </div>
+              </Container>
+            </SceneStep>
+          );
+        })}
+      </ScrollScene>
     </Section>
   );
 }
