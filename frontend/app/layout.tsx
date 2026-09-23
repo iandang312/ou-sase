@@ -1,29 +1,61 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Geist_Mono } from "next/font/google";
+import { Nav } from "@/components/site/Nav";
+import { Footer } from "@/components/site/Footer";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+/**
+ * DESIGN.md font substitutes: CoinbaseDisplay and CoinbaseSans are licensed,
+ * and Inter is the sanctioned stand-in for both. CoinbaseMono -> Geist Mono.
+ * Display weight stays at 400 — that restraint is the whole typographic voice.
+ */
+const inter = Inter({
+  variable: "--font-sase-sans",
   subsets: ["latin"],
+  display: "swap",
+});
+
+const interDisplay = Inter({
+  variable: "--font-sase-display",
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+  variable: "--font-sase-mono",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "OU SASE",
-  description: "Society of Asian Scientists and Engineers at OU",
+  title: {
+    default: "OU SASE — Society of Asian Scientists and Engineers",
+    template: "%s | OU SASE",
+  },
+  description:
+    "The University of Oklahoma chapter of the Society of Asian Scientists and Engineers. Professional development, community, and a pipeline of engineering talent.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${inter.variable} ${interDisplay.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="bg-canvas text-ink flex min-h-full flex-col">
+        <a
+          href="#main"
+          className="bg-brand text-on-brand sr-only rounded-md px-4 py-2 focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100]"
+        >
+          Skip to content
+        </a>
+        <Nav />
+        <main id="main" className="flex-1">
+          {children}
+        </main>
+        <Footer />
+      </body>
     </html>
   );
 }

@@ -1,0 +1,190 @@
+// firestore.rules — OU SASE chapter site
+//
+// Read this comment before touching anything below. This file is the REAL
+// security boundary for the app. The "you must be an exec" checks you see
+// in the website's UI (buttons hidden, pages redirected) are just user
+// experience — they do not stop anyone who opens the browser dev tools and
+// talks to Firestore directly. THESE RULES are what actually stops that.
+// If you loosen a rule here, you have made that data public, no matter what
+// the website's code does.
+//
+// ---------------------------------------------------------------------------
+// BOOTSTRAP PROBLEM — read this if nobody can log in as an exec
+// ---------------------------------------------------------------------------
+// The rules below say "only an existing active exec can create/edit exec
+// docs." That's on purpose (see the execs section). But it means the very
+// FIRST exec has to be created by hand, because there is no exec yet to
+// authorize one. To do that:
+//   1. Have that person sign in once through the site (or Firebase Auth) so
+//      a Firebase Auth user exists for them.
+//   2. Go to the Firebase console -> Build -> Authentication -> Users tab,
+//      and copy their "User UID".
+//   3. Go to Build -> Firestore Database -> Data tab.
+//   4. Create a collection named exactly "execs" (if it doesn't exist yet).
+//   5. Add a document whose Document ID is that UID (not an auto-ID) with
+//      fields matching the Exec shape in frontend/lib/types.ts, e.g.:
+//        email: "president@example.com"   (string)
+//        displayName: "Jane Doe"          (string, optional)
+//        role: "president"                (string)
+//        active: true                     (boolean)
+//        addedAt: "2026-09-23T00:00:00Z"  (string, ISO date)
+//   Once that doc exists with active == true, that person can add every
+//   other exec through the site's admin UI — the rules below let any active
+//   exec create/edit other exec docs from then on.
+// ---------------------------------------------------------------------------
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Is the currently signed-in user an active exec (officer)?
+    // This is the one function nearly every rule below relies on. It works
+    // by looking up the execs/{uid} document for whoever is making the
+    // request and checking that (a) that document exists and (b) its
+    // "active" field is true. A signed-in user with NO execs doc, or an
+    // execs doc with active == false, is NOT an exec.
+    function isActiveExec() {
+      return request.auth != null &&
+        exists(/databases/$(database)/documents/execs/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/execs/$(request.auth.uid)).data.active == true;
+    }
+
+    // ---------------------------------------------------------------------
+    // execs/{uid} — who is allowed to manage the site
+    // ---------------------------------------------------------------------
+    // This collection IS the admin permission list. Whoever has a document
+    // here with active == true can create/edit/delete members, sponsors,
+    // and event photos, and can add or remove other execs.
+    //
+    // A signed-in user may read ONLY their own exec document (so the app
+    // can check "am I an exec?" after login). They can never read anyone
+    // else's exec doc.
+    //
+    // Nobody — not even a signed-in user — may create their own exec doc.
+    // If we allowed that, any random person with a Google/email account
+    // could sign in and grant themselves admin access to the whole site.
+    // Only an EXISTING active exec can create or modify exec docs (e.g.
+    // through the admin "add officer" screen). The very first exec doc must
+    // be created by hand in the console — see the BOOTSTRAP section above.
+    // The signed-in user's own email, lowercased, or "" if they have none.
+    // Invite documents are keyed by lowercased email so that Jane@OU.edu and
+    // jane@ou.edu are the same person.
+    function myEmail() {
+      return request.auth != null && request.auth.token.email != null
+        ? request.auth.token.email.lower()
+        : "";
+    }
+
+    function inviteRole(email) {
+      return get(/databases/$(database)/documents/execInvites/$(email)).data.role;
+    }
+
+    match /execs/{uid} {
+      // You can always read your own exec doc (that is how the site answers
+      // "am I an exec?"). Active execs can read all of them for the admin
+      // roster screen.
+      allow read: if (request.auth != null && request.auth.uid == uid)
+                  || isActiveExec();
+
+      // Editing or removing an officer is an exec-only action.
+      allow update, delete: if isActiveExec();
+
+      // Creating an exec doc happens one of two ways:
+      //   1. An active exec creates it outright.
+      //   2. An INVITED person claims their own invite on first sign-in.
+      //
+      // Case 2 is tightly bound so it cannot be used to self-promote:
+      //   - the document id must be the caller's own uid
+      //   - an execInvites doc for the caller's own email must already exist,
+      //     and only an active exec can create those
+      //   - the role must match the invited role exactly, so an invitee
+      //     cannot upgrade themselves from officer to admin
+      allow create: if isActiveExec()
+                    || (
+                      request.auth != null
+                      && request.auth.uid == uid
+                      && myEmail() != ""
+                      && exists(/databases/$(database)/documents/execInvites/$(myEmail()))
+                      && request.resource.data.role == inviteRole(myEmail())
+                      && request.resource.data.email == myEmail()
+                      && request.resource.data.active == true
+                    );
+    }
+
+    // ---------------------------------------------------------------------
+    // execInvites/{email} — pending officer invitations
+    // ---------------------------------------------------------------------
+    // A new officer has no Firebase uid until they sign in for the first
+    // time, so an exec cannot create their execs/{uid} doc ahead of time.
+    // Instead an exec creates an invite keyed by the person's email, and the
+    // person exchanges it for a real exec doc when they first sign in.
+    //
+    // ONLY an active exec may create or change an invite. This is the whole
+    // security property: if an invitee could write their own invite, they
+    // could invite themselves as admin and the check above would pass.
+    // They may read and delete THEIR OWN invite only — reading so the app can
+    // find it, deleting so it is consumed once it has been used.
+    match /execInvites/{email} {
+      allow read: if isActiveExec() || myEmail() == email;
+      allow create, update: if isActiveExec();
+      allow delete: if isActiveExec() || myEmail() == email;
+    }
+
+    // ---------------------------------------------------------------------
+    // members/{id} — student profile cards
+    // ---------------------------------------------------------------------
+    // This is the most privacy-sensitive collection: names, emails, links,
+    // resumes. A member's own choice about being visible to recruiters is
+    // stored in the `visibleToRecruiters` field, and it must be respected.
+    //
+    // Public (anyone on the internet, even signed-out) may read a member
+    // document ONLY if visibleToRecruiters == true. Members who have not
+    // opted in are invisible to the public, full stop.
+    //
+    // Active execs may read every member document, visible or not, because
+    // they need the full roster to manage it.
+    //
+    // Only active execs may create, update, or delete member documents.
+    // A member never edits their own card directly through Firestore rules
+    // in this version of the app — that goes through an exec-managed admin
+    // flow.
+    match /members/{id} {
+      allow read: if resource.data.visibleToRecruiters == true || isActiveExec();
+      allow create, update, delete: if isActiveExec();
+    }
+
+    // ---------------------------------------------------------------------
+    // sponsors/{id} — chapter sponsor/partner logos and info
+    // ---------------------------------------------------------------------
+    // Public may read a sponsor ONLY while it is marked active == true
+    // (so old/expired sponsors quietly stop being public without deleting
+    // their history). Execs can always read every sponsor doc for
+    // management, and only execs can write.
+    match /sponsors/{id} {
+      allow read: if resource.data.active == true || isActiveExec();
+      allow create, update, delete: if isActiveExec();
+    }
+
+    // ---------------------------------------------------------------------
+    // eventPhotos/{id} — the scattered "tabletop" event photo gallery
+    // ---------------------------------------------------------------------
+    // These are public marketing photos, not sensitive data, so anyone may
+    // read them. Only execs may add, edit, or remove them.
+    match /eventPhotos/{id} {
+      allow read: if true;
+      allow create, update, delete: if isActiveExec();
+    }
+
+    // ---------------------------------------------------------------------
+    // Default deny
+    // ---------------------------------------------------------------------
+    // Anything not explicitly listed above (any other collection, any
+    // future collection someone adds and forgets to write a rule for) is
+    // completely locked down: no read, no write, for anyone. This is the
+    // safe default — a forgotten rule should fail closed, not open.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
