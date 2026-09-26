@@ -80,18 +80,38 @@ export async function verifyActiveExec(
       .doc(decoded.uid)
       .get();
 
-    if (!snap.exists) return null;
+    if (!snap.exists) {
+      console.warn(`[verifyActiveExec] denied: no execs/${decoded.uid} document.`);
+      return null;
+    }
     const data = snap.data();
-    if (!data || data.active !== true) return null;
+    if (!data || data.active !== true) {
+      console.warn(`[verifyActiveExec] denied: execs/${decoded.uid} is not active.`);
+      return null;
+    }
 
     return {
       uid: decoded.uid,
       email: decoded.email ?? null,
       role: typeof data.role === "string" ? data.role : "officer",
     };
-  } catch {
-    // Bad signature, expired, revoked, wrong project, Firestore unreachable —
-    // all of it fails closed.
+  } catch (err) {
+    // Bad signature, expired, revoked, wrong project, Firestore unreachable,
+    // a mangled FIREBASE_PRIVATE_KEY — all of it fails closed. Log the reason
+    // (never the token) so a misconfigured Admin SDK is distinguishable from
+    // a genuine non-exec in the server logs.
+    console.warn("[verifyActiveExec] denied:", describeError(err, idToken));
     return null;
   }
+}
+
+/** Error code + message for logs, with the token redacted if it was echoed. */
+function describeError(err: unknown, secret?: string): string {
+  const code =
+    typeof err === "object" && err !== null && "code" in err
+      ? `${String((err as { code: unknown }).code)}: `
+      : "";
+  const message = err instanceof Error ? err.message : String(err);
+  const text = `${code}${message}`;
+  return secret ? text.split(secret).join("[redacted token]") : text;
 }
