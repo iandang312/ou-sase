@@ -7,6 +7,7 @@ import { CloudImage } from "@/components/site/CloudImage";
 import { SquiggleRails } from "@/components/site/SquiggleRails";
 import { Reveal, RevealGroup } from "@/components/ui/Reveal";
 import { listSponsors } from "@/lib/firestore";
+import { safeHttpUrl } from "@/lib/safeUrl";
 import { SPONSOR_TIERS, type Sponsor, type SponsorTier } from "@/lib/types";
 import { SAMPLE_SPONSORS } from "@/components/sponsors/sampleSponsors";
 import { SHOW_PLACEHOLDER_DATA } from "@/lib/placeholders";
@@ -198,10 +199,12 @@ export default async function SponsorsPage(_props: PageProps<"/sponsors">) {
                             </div>
                           </Card>
                         );
-                        return sponsor.websiteUrl ? (
+                        // Render-time guard: only absolute http(s) links.
+                        const website = safeHttpUrl(sponsor.websiteUrl);
+                        return website ? (
                           <a
                             key={sponsor.id}
-                            href={sponsor.websiteUrl}
+                            href={website}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="block h-full rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-ink focus-visible:ring-offset-2"

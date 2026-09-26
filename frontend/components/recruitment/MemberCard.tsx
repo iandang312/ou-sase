@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/Card";
 import { CloudImage } from "@/components/site/CloudImage";
 import { CLASSIFICATION_BADGE_TONE } from "@/components/recruitment/classificationStyles";
 import { SEEKING_BADGE_TONE } from "@/components/recruitment/seekingStyles";
+import { safeHttpUrl } from "@/lib/safeUrl";
 import type { Member } from "@/lib/types";
 
 const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
@@ -47,6 +48,11 @@ function ExternalLinkIcon() {
 export function MemberCard({ member }: { member: Member }) {
   const fullName = `${member.firstName} ${member.lastName}`;
   const resume = resumeUrl(member);
+  // Render-time guard (defense in depth — the admin form also normalizes on
+  // save): relative or non-http(s) values never become an href.
+  const linkedin = safeHttpUrl(member.linkedinUrl);
+  const github = safeHttpUrl(member.githubUrl);
+  const portfolio = safeHttpUrl(member.portfolioUrl);
   const skills = member.skills.slice(0, MAX_SKILLS);
   const hiddenSkillCount = member.skills.length - skills.length;
 
@@ -121,9 +127,9 @@ export function MemberCard({ member }: { member: Member }) {
             Resume not shared
           </span>
         )}
-        {member.linkedinUrl ? (
+        {linkedin ? (
           <a
-            href={member.linkedinUrl}
+            href={linkedin}
             target="_blank"
             rel="noopener noreferrer"
             className={FOOTER_LINK_CLASS}
@@ -132,9 +138,9 @@ export function MemberCard({ member }: { member: Member }) {
             LinkedIn
           </a>
         ) : null}
-        {member.githubUrl ? (
+        {github ? (
           <a
-            href={member.githubUrl}
+            href={github}
             target="_blank"
             rel="noopener noreferrer"
             className={FOOTER_LINK_CLASS}
@@ -143,9 +149,9 @@ export function MemberCard({ member }: { member: Member }) {
             GitHub
           </a>
         ) : null}
-        {member.portfolioUrl ? (
+        {portfolio ? (
           <a
-            href={member.portfolioUrl}
+            href={portfolio}
             target="_blank"
             rel="noopener noreferrer"
             className={FOOTER_LINK_CLASS}
