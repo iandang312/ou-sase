@@ -30,7 +30,7 @@ const NAV_ITEMS = [
 ] as const;
 
 export function AdminGate({ children }: { children: ReactNode }) {
-  const { user, exec, loading, isAuthorized, signOut } = useAuth();
+  const { user, exec, loading, isAuthorized, notice, signOut } = useAuth();
   const pathname = usePathname();
 
   if (!isFirebaseConfigured) {
@@ -87,6 +87,11 @@ export function AdminGate({ children }: { children: ReactNode }) {
               Signed in as {user.email}, but there&apos;s no active exec record for this account.
               Ask a current officer to add you before you can manage the site.
             </p>
+            {notice ? (
+              <p className="text-body-sm text-negative mb-6" role="alert">
+                {notice}
+              </p>
+            ) : null}
             <Button variant="secondary" onClick={() => signOut()}>
               Sign out
             </Button>

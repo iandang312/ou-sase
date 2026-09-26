@@ -10,8 +10,17 @@ import { useAuth, isFirebaseConfigured } from "@/lib/useAuth";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { user, exec, loading, isAuthorized, error, signInWithGoogle, signInWithEmail, signOut } =
-    useAuth();
+  const {
+    user,
+    exec,
+    loading,
+    isAuthorized,
+    error,
+    notice,
+    signInWithGoogle,
+    signInWithEmail,
+    signOut,
+  } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -85,6 +94,11 @@ export default function LoginPage() {
               You&apos;re signed in, but there&apos;s no active exec record for this account.
               Ask a current officer to add you in the admin panel before you can manage the site.
             </p>
+            {notice ? (
+              <p className="text-body-sm text-negative mb-6" role="alert">
+                {notice}
+              </p>
+            ) : null}
             <Button variant="secondary" onClick={() => signOut()}>
               Sign out
             </Button>

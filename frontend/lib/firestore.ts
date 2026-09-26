@@ -202,7 +202,13 @@ export async function claimExecInvite(
   let invite: ExecInvite;
   try {
     const snap = await getDoc(inviteRef);
-    if (!snap.exists()) return null;
+    if (!snap.exists()) {
+      // The invite may be gone because it was JUST claimed — by this user in
+      // another tab, or by a concurrent sign-in. Re-read our own exec doc
+      // before concluding "not invited", so that race never shows up as
+      // "not authorized".
+      return await getExec(uid);
+    }
     invite = { id: snap.id, ...snap.data() } as ExecInvite;
   } catch {
     // No invite readable for this account — not an error, just not invited.
