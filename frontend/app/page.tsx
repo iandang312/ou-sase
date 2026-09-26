@@ -3,6 +3,7 @@ import { Hero } from "@/components/home/Hero";
 import { JoinCta } from "@/components/home/JoinCta";
 import { StatRow } from "@/components/home/StatRow";
 import { TabletopSection } from "@/components/home/TabletopSection";
+import { YearTimeline } from "@/components/home/YearTimeline";
 import { listEventPhotos } from "@/lib/firestore";
 
 /**
@@ -24,6 +25,7 @@ export default async function Home() {
       <TabletopSection photos={photos} />
       <FeatureCards />
       <StatRow />
+      <YearTimeline />
       <JoinCta />
     </>
   );

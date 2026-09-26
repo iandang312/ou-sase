@@ -20,7 +20,7 @@ export function TabletopSection({ photos }: { photos: EventPhoto[] }) {
   if (displayPhotos.length === 0) return null;
 
   return (
-    <Section tone="light" className="relative">
+    <Section tone="light" className="relative min-h-svh flex flex-col justify-center">
       <Container>
         <SectionHeading
           kicker="Around campus"
