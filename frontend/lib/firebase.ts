@@ -8,7 +8,7 @@
  */
 import { getApp, getApps, initializeApp, type FirebaseOptions } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
-import { getFirestore, type Firestore } from "firebase/firestore";
+import { getFirestore, initializeFirestore, type Firestore } from "firebase/firestore";
 
 const firebaseConfig: FirebaseOptions = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -33,7 +33,26 @@ const app = getApps().length ? getApp() : isFirebaseConfigured ? initializeApp(f
 
 export const firebaseApp = app;
 export const auth: Auth | null = app ? getAuth(app) : null;
-export const db: Firestore | null = app ? getFirestore(app) : null;
+/**
+ * `ignoreUndefinedProperties`: the admin drafts carry optional fields as
+ * `undefined` (no photo yet, no "since" year, a cleared upload). With the
+ * default settings the Web SDK REJECTS any write containing `undefined`
+ * ("Unsupported field value: undefined"), so saving a member without a photo
+ * would fail. With this on, undefined keys are simply left out of the write.
+ * Clearing a field on an existing doc is handled in lib/firestore.ts.
+ */
+function createDb(firebase: NonNullable<typeof app>): Firestore {
+  try {
+    // Returns the existing instance when called again with identical
+    // settings, so Next's hot reload is fine.
+    return initializeFirestore(firebase, { ignoreUndefinedProperties: true });
+  } catch {
+    // Already initialised by an earlier module instance (HMR edge case).
+    return getFirestore(firebase);
+  }
+}
+
+export const db: Firestore | null = app ? createDb(app) : null;
 
 /** Throwing accessor for code paths that genuinely cannot proceed without it. */
 export function requireDb(): Firestore {

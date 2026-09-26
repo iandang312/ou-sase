@@ -20,6 +20,7 @@ vi.mock("firebase/firestore", () => ({
   deleteDoc: async (ref: { path: string }) => {
     h.docs.delete(ref.path);
   },
+  deleteField: () => "__deleteField__",
   addDoc: vi.fn(),
   collection: vi.fn(),
   getDocs: vi.fn(),
@@ -29,7 +30,7 @@ vi.mock("firebase/firestore", () => ({
   where: vi.fn(),
 }));
 
-import { claimExecInvite } from "@/lib/firestore";
+import { claimExecInvite, undefinedToDeleteField } from "@/lib/firestore";
 
 beforeEach(() => h.docs.clear());
 
@@ -49,5 +50,14 @@ describe("claimExecInvite", () => {
 
   it("returns null for someone who was never invited", async () => {
     expect(await claimExecInvite("u9", "nobody@ou.edu")).toBeNull();
+  });
+});
+
+describe("undefinedToDeleteField", () => {
+  it("turns cleared fields into deletes so 'clear' removes the old value", () => {
+    expect(undefinedToDeleteField({ photoPublicId: undefined, firstName: "Jane" })).toEqual({
+      photoPublicId: "__deleteField__",
+      firstName: "Jane",
+    });
   });
 });

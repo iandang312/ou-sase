@@ -10,6 +10,7 @@ import {
   addDoc,
   collection,
   deleteDoc,
+  deleteField,
   doc,
   getDoc,
   getDocs,
@@ -260,12 +261,26 @@ export async function createMember(data: NewMember): Promise<string> {
   return ref.id;
 }
 
+/**
+ * Turn `undefined` values into `deleteField()` for an `updateDoc` patch.
+ *
+ * `ignoreUndefinedProperties` (lib/firebase.ts) makes undefined keys vanish
+ * from a write, which for an UPDATE means "leave the old value" — so clearing
+ * a photo or résumé in the admin form would silently keep it. An explicit
+ * delete makes "clear" actually clear.
+ */
+export function undefinedToDeleteField<T extends object>(patch: T): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(patch).map(([k, v]) => [k, v === undefined ? deleteField() : v]),
+  );
+}
+
 export async function updateMember(
   id: string,
   patch: Partial<NewMember>,
 ): Promise<void> {
   await updateDoc(doc(requireDbOrThrow(), COLLECTIONS.members, id), {
-    ...patch,
+    ...undefinedToDeleteField(patch),
     updatedAt: new Date().toISOString(),
   });
 }
@@ -274,13 +289,19 @@ export async function deleteMember(id: string): Promise<void> {
   await deleteDoc(doc(requireDbOrThrow(), COLLECTIONS.members, id));
 }
 
+/*
+ * upsertSponsor / upsertEventPhoto REPLACE the whole document (no
+ * `merge: true`). The admin draft is always the complete document, and a full
+ * replace is what lets "clear" (an undefined key, dropped by
+ * ignoreUndefinedProperties) actually remove the old value.
+ */
 export async function upsertSponsor(
   sponsor: Omit<Sponsor, "id"> & { id?: string },
 ): Promise<string> {
   const database = requireDbOrThrow();
   const { id, ...data } = sponsor;
   if (id) {
-    await setDoc(doc(database, COLLECTIONS.sponsors, id), data, { merge: true });
+    await setDoc(doc(database, COLLECTIONS.sponsors, id), data);
     return id;
   }
   const ref = await addDoc(collection(database, COLLECTIONS.sponsors), data);
@@ -297,7 +318,7 @@ export async function upsertEventPhoto(
   const database = requireDbOrThrow();
   const { id, ...data } = photo;
   if (id) {
-    await setDoc(doc(database, COLLECTIONS.eventPhotos, id), data, { merge: true });
+    await setDoc(doc(database, COLLECTIONS.eventPhotos, id), data);
     return id;
   }
   const ref = await addDoc(collection(database, COLLECTIONS.eventPhotos), data);
