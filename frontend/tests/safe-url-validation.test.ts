@@ -13,6 +13,9 @@ describe("safeHttpUrl", () => {
   it("prepends https:// to a bare host copied from the address bar", () => {
     expect(safeHttpUrl("linkedin.com/in/jane")).toBe("https://linkedin.com/in/jane");
     expect(safeHttpUrl("  www.github.com/jane  ")).toBe("https://www.github.com/jane");
+    expect(safeHttpUrl("www.site.com:8080/x")).toBe("https://www.site.com:8080/x");
+    expect(safeHttpUrl("javascript:1")).toBeUndefined();
+    expect(safeHttpUrl("data:1,alert(1)")).toBeUndefined();
   });
 
   it("rejects non-http schemes", () => {

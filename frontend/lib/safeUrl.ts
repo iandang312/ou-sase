@@ -15,7 +15,10 @@ export function safeHttpUrl(raw?: string | null): string | undefined {
   const v = raw?.trim();
   if (!v) return undefined;
   try {
-    const u = new URL(/^[a-z][a-z\d+.-]*:/i.test(v) ? v : `https://${v}`);
+    // A leading `word:` is a scheme, unless a port number follows it
+    // (`www.site.com:8080/x` is a bare host, not a `www.site.com:` scheme).
+    const hasScheme = /^[a-z][a-z\d+.-]*:(?!\d)/i.test(v);
+    const u = new URL(hasScheme ? v : `https://${v}`);
     if (u.protocol !== "http:" && u.protocol !== "https:") return undefined;
     // `https://foo` with no dot is almost certainly a typo, not a real site.
     if (!u.hostname.includes(".") && u.hostname !== "localhost") return undefined;
