@@ -11,6 +11,8 @@ import { safeHttpUrl } from "@/lib/safeUrl";
 import { SPONSOR_TIERS, type Sponsor, type SponsorTier } from "@/lib/types";
 import { SAMPLE_SPONSORS } from "@/components/sponsors/sampleSponsors";
 import { SHOW_PLACEHOLDER_DATA } from "@/lib/placeholders";
+import { SupportFundsScene } from "@/components/sponsors/SupportFundsScene";
+import { PartnerProcessScene } from "@/components/sponsors/PartnerProcessScene";
 
 /**
  * Re-render from Firestore at most once a minute.
@@ -99,7 +101,7 @@ export default async function SponsorsPage(_props: PageProps<"/sponsors">) {
   return (
     <>
       {/* 1. Header band */}
-      <Section tone="dark" className="relative overflow-hidden">
+      <Section tone="dark" className="relative min-h-svh flex flex-col justify-center overflow-hidden">
         <SquiggleRails tone="white" />
         <Container>
           <div className="flex max-w-[70ch] flex-col gap-6">
@@ -132,8 +134,12 @@ export default async function SponsorsPage(_props: PageProps<"/sponsors">) {
         </Container>
       </Section>
 
-      {/* 2. Current sponsors grouped by tier */}
-      <Section tone="light">
+      {/* 2. Current sponsors grouped by tier. A live, reference-able roster
+          with logos and outbound links — kept as a normal scrollable
+          section, never inside a sticky scene, for the same reason the
+          recruitment browser stays out of one: people need to scan and
+          click freely, not scrub through it one company at a time. */}
+      <Section tone="light" className="min-h-svh">
         <Container>
           <SectionHeading
             kicker="Thank you"
@@ -227,8 +233,10 @@ export default async function SponsorsPage(_props: PageProps<"/sponsors">) {
         </Container>
       </Section>
 
+      <SupportFundsScene sponsorEmail={SPONSOR_EMAIL} />
+
       {/* 3. Why sponsor us — value props */}
-      <Section tone="soft">
+      <Section tone="soft" className="min-h-svh flex flex-col justify-center">
         <Container>
           <SectionHeading
             kicker="Why sponsor OU SASE"
@@ -290,8 +298,10 @@ export default async function SponsorsPage(_props: PageProps<"/sponsors">) {
         </Container>
       </Section>
 
-      {/* 4. Tier comparison */}
-      <Section tone="light">
+      {/* 4. Tier comparison — kept as a normal, all-at-once section (not a
+          ScrollScene) so a company can compare tiers side by side instead of
+          scrubbing through them one at a time. */}
+      <Section tone="light" className="min-h-svh flex flex-col justify-center">
         <Container>
           <SectionHeading
             kicker="Partnership tiers"
@@ -376,8 +386,10 @@ export default async function SponsorsPage(_props: PageProps<"/sponsors">) {
         </Container>
       </Section>
 
+      <PartnerProcessScene sponsorEmail={SPONSOR_EMAIL} />
+
       {/* 5. Dark CTA band */}
-      <Section tone="dark" className="relative overflow-hidden">
+      <Section tone="dark" className="relative min-h-svh flex flex-col justify-center overflow-hidden">
         <SquiggleRails tone="white" />
         <Container>
           <div className="flex flex-col items-center gap-6 text-center">
