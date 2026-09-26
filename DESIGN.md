@@ -459,6 +459,33 @@ document to overdo.
 7. **Parallax is capped at very subtle** — a few percent of travel on
    decorative elements only. Never on text.
 
+### Scroll-told scenes
+
+Pages relay their main sections through scrolling: a section is several
+screens tall, its content pins while you scroll through it, and it changes in
+beats. Build these with `components/ui/ScrollScene.tsx` (the one place the
+site uses the Motion library, `motion/react`), never a hand-rolled scroll
+listener.
+
+- **`ScrollScene`** is `length` screens tall (2–4) with a sticky full-screen
+  stage. **`SceneStep`** is one beat, shown for a slice of the scene's progress.
+  Neighbouring slices may overlap by at most the step's `fade` (0.06 by
+  default); more than that and two steps show half-faded on top of each other.
+  **`useSceneValue`** scrubs a number for counters, horizontal tracks and
+  progress rails.
+- **Steps are `absolute inset-0`**, so they ignore the stage's padding and
+  alignment. Give each step its own `flex flex-col justify-center pt-16` so it
+  centers below the 64px sticky nav.
+- **Check it fits a phone.** A pinned stage is exactly one screen at 390×844
+  and clips anything taller. Tighten grids and type on mobile instead of
+  letting a beat overflow.
+- **Keep interactive, scannable content out of scenes.** The recruitment
+  roster, the sponsor list and the tier comparison stay in normal flow, because
+  people need to compare and click them at their own pace.
+- **Reduced motion turns every scene flat:** not tall, not sticky, and every
+  step stacked and visible. A layout that only makes sense animated (a
+  horizontal track) branches on `useScene().isStatic` to a plain list.
+
 ### Reduced motion
 
 `prefers-reduced-motion: reduce` is respected globally in `globals.css`:
@@ -611,9 +638,9 @@ the system.** When one is adopted, move it into the relevant section above and
 delete it here. Browser-support figures are from caniuse at the time of writing;
 re-check before relying on a borderline feature.
 
-The site currently ships no animation library; everything above is CSS plus
-`IntersectionObserver`. Keep that default and add a dependency only when a
-specific interaction needs it.
+Motion (`motion/react`) is now installed for scroll-told scenes (see "Scroll-told
+scenes" above). Small reveals stay CSS plus `IntersectionObserver`; add further
+dependencies only when a specific interaction needs them.
 
 ### Motion
 
@@ -626,13 +653,11 @@ specific interaction needs it.
   the `IntersectionObserver` reveal for simple fades (~87% support). Keep the
   observer as the fallback until Firefox support is established, and keep rule
   5 of Scroll animation: content visible if the effect never runs.
-- **Motion (`motion/react`, formerly Framer Motion)** is the library to reach
-  for if a component needs exit animations, shared-element `layoutId`
-  transitions or gestures, for example a card expanding into a detail view. Do
-  not add it for effects CSS already covers.
-- **GSAP** (fully free since April 2025, SplitText and ScrollTrigger included)
-  only if the site gains a pinned, scroll-scrubbed story section. Not justified
-  for reveals.
+- **Motion is already installed.** Use it next for exit animations,
+  shared-element `layoutId` transitions or gestures, for example a card
+  expanding into a detail view, rather than adding a second library.
+- **GSAP** is no longer needed for pinned, scrubbed sections; `ScrollScene`
+  covers them.
 - **Safe CSS to use now:** `@starting-style` with `transition-behavior:
   allow-discrete` for entry transitions of popovers and dialogs; `linear()` for
   custom spring-like easing tokens. **Not yet:** `calc-size()` /

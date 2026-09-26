@@ -51,7 +51,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           here. DESIGN.md: a missing animation must never mean missing content.
         */}
         <noscript>
-          <style>{`[data-reveal]{opacity:1 !important;transform:none !important}`}</style>
+          <style>{`[data-reveal],[data-scene-step]{opacity:1 !important;transform:none !important}`}</style>
         </noscript>
       </head>
       <body className="bg-canvas text-ink flex min-h-full flex-col">
