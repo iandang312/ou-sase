@@ -8,6 +8,8 @@ import { ConfirmButton } from "@/components/admin/ConfirmButton";
 import { CloudinaryUploadField } from "@/components/admin/CloudinaryUploadField";
 import { SaveStatus } from "@/components/admin/SaveStatus";
 import { deleteSponsor, listSponsors, upsertSponsor } from "@/lib/firestore";
+import { safeHttpUrl } from "@/lib/safeUrl";
+import { validateSponsorDraft } from "@/lib/validation";
 import { SPONSOR_TIERS, type Sponsor, type SponsorTier } from "@/lib/types";
 
 const TIERS = Object.keys(SPONSOR_TIERS) as SponsorTier[];
@@ -82,10 +84,21 @@ export function SponsorsManager() {
   }
 
   async function handleSave() {
+    const invalid = validateSponsorDraft(draft);
+    if (invalid) {
+      setSaveState("error");
+      setSaveError(invalid);
+      return;
+    }
     setSaveState("saving");
     setSaveError(null);
     try {
-      await upsertSponsor({ ...draft, id: editingId === "new" ? undefined : editingId! });
+      await upsertSponsor({
+        ...draft,
+        name: draft.name.trim(),
+        websiteUrl: safeHttpUrl(draft.websiteUrl),
+        id: editingId === "new" ? undefined : editingId!,
+      });
       setSaveState("saved");
       await refresh();
       setTimeout(() => {
@@ -99,8 +112,13 @@ export function SponsorsManager() {
   }
 
   async function handleDelete(id: string) {
-    await deleteSponsor(id);
-    await refresh();
+    setLoadError(null);
+    try {
+      await deleteSponsor(id);
+      await refresh();
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : "Failed to delete sponsor.");
+    }
   }
 
   return (
@@ -128,7 +146,9 @@ export function SponsorsManager() {
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             <label className="flex flex-col gap-1">
-              <span className="text-caption-strong text-ink">Name</span>
+              <span className="text-caption-strong text-ink">
+                Name <span className="text-negative" aria-hidden>*</span>
+              </span>
               <input
                 className={inputClass}
                 value={draft.name}
@@ -199,6 +219,7 @@ export function SponsorsManager() {
             <div className="md:col-span-2">
               <CloudinaryUploadField
                 label="Logo"
+                folder="sponsors"
                 value={draft.logoPublicId}
                 onChange={(id) => setDraft({ ...draft, logoPublicId: id })}
               />

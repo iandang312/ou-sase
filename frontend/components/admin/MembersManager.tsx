@@ -13,6 +13,8 @@ import {
   listAllMembers,
   updateMember,
 } from "@/lib/firestore";
+import { safeHttpUrl } from "@/lib/safeUrl";
+import { validateMemberDraft } from "@/lib/validation";
 import type { Classification, Member } from "@/lib/types";
 
 const CLASSIFICATIONS: Classification[] = [
@@ -154,11 +156,26 @@ export function MembersManager() {
   }
 
   async function handleSave() {
+    const invalid = validateMemberDraft(draft);
+    if (invalid) {
+      setSaveState("error");
+      setSaveError(invalid);
+      return;
+    }
     setSaveState("saving");
     setSaveError(null);
     try {
       const payload: MemberDraft = {
         ...draft,
+        firstName: draft.firstName.trim(),
+        lastName: draft.lastName.trim(),
+        email: draft.email.trim(),
+        major: draft.major.trim(),
+        // Normalized to an absolute http(s) URL (or dropped) so the public
+        // card never renders a relative or non-http link.
+        linkedinUrl: safeHttpUrl(draft.linkedinUrl),
+        githubUrl: safeHttpUrl(draft.githubUrl),
+        portfolioUrl: safeHttpUrl(draft.portfolioUrl),
         skills: skillsText
           .split(",")
           .map((s) => s.trim())
@@ -184,8 +201,13 @@ export function MembersManager() {
   }
 
   async function handleDelete(id: string) {
-    await deleteMember(id);
-    await refresh();
+    setLoadError(null);
+    try {
+      await deleteMember(id);
+      await refresh();
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : "Failed to delete member.");
+    }
   }
 
   const filteredMembers = useMemo(() => {
@@ -377,6 +399,7 @@ export function MembersManager() {
               <div className="md:col-span-2">
                 <CloudinaryUploadField
                   label="Profile photo"
+                  folder="members"
                   value={draft.photoPublicId}
                   onChange={(id) => setDraft({ ...draft, photoPublicId: id })}
                 />
@@ -384,6 +407,7 @@ export function MembersManager() {
               <div className="md:col-span-2">
                 <CloudinaryUploadField
                   label="Resume (PDF)"
+                  folder="resumes"
                   accept="application/pdf"
                   value={draft.resumePublicId}
                   onChange={(id) => setDraft({ ...draft, resumePublicId: id })}

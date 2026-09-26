@@ -110,8 +110,13 @@ export function EventPhotosManager() {
   }
 
   async function handleDelete(id: string) {
-    await deleteEventPhoto(id);
-    await refresh();
+    setLoadError(null);
+    try {
+      await deleteEventPhoto(id);
+      await refresh();
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : "Failed to delete photo.");
+    }
   }
 
   return (
@@ -140,6 +145,7 @@ export function EventPhotosManager() {
           <div className="grid gap-4 md:grid-cols-2">
             <div className="md:col-span-2">
               <CloudinaryUploadField
+                folder="events"
                 label="Photo (required)"
                 value={draft.photoPublicId}
                 onChange={(id) => setDraft({ ...draft, photoPublicId: id ?? "" })}
