@@ -156,6 +156,14 @@ If you would rather not run a script, create the document by hand:
   keyed by *email* instead, and the first time they sign in with that exact
   address, the site swaps the invite for a real officer record automatically.
 
+  The address must be **verified**: signing in with Google always is. A
+  password account whose email has not been verified cannot claim an
+  invite (the rules refuse it, and the login page says so) — otherwise
+  anyone could register a password account for an officer's address before
+  they do and take the invite. If the chapter never uses password sign-in,
+  you can also turn off self sign-up in Firebase console → Authentication →
+  Settings → User actions.
+
   **Only current officers can create invites.** That is the security
   property that makes this safe: if someone could write their own invite,
   they could make themselves an admin. The invitee also gets exactly the
@@ -212,12 +220,14 @@ Steps:
    section 8) — a new Firebase project starts with no custom rules and will
    deny everything until you do this.
 5. **Create the new Cloudinary account** under the chapter's login
-   (cloudinary.com). Set up an unsigned upload preset with the same name/
-   settings as the old one (Settings → Upload → Upload presets).
+   (cloudinary.com). Do **not** create an unsigned upload preset — uploads
+   are signed server-side by `/api/cloudinary/sign` (see section 3).
 6. **Move the media**: download all images/PDFs from the old Cloudinary
    account (Cloudinary's Media Library lets you select-all and download, or
    use the Cloudinary CLI/API for bulk export) and re-upload them to the new
-   account, ideally keeping the same folder structure and `public_id`s so
+   account, ideally keeping the same folder structure (`members/`,
+   `resumes/`, `sponsors/`, `events/` — the admin forms upload into those)
+   and `public_id`s so
    the `photoPublicId`/`resumePublicId`/`logoPublicId` values already stored
    in Firestore keep working without editing every document. If the
    `public_id`s change, you'll need to update those fields in Firestore to
@@ -225,8 +235,10 @@ Steps:
 7. **Update environment variables** everywhere the app is deployed (see
    section 7 — typically your Vercel project settings) with the new
    project's values: all six `NEXT_PUBLIC_FIREBASE_*` values, the new
-   `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`, `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET`,
-   `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET`. Also update your local
+   `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`,
+   `CLOUDINARY_API_SECRET`, and the three server-only `FIREBASE_PROJECT_ID`,
+   `FIREBASE_CLIENT_EMAIL` and `FIREBASE_PRIVATE_KEY` from the new project's
+   service account (section 3). Also update your local
    `.env.local` if you develop locally.
 8. **Redeploy** the site so it picks up the new env vars.
 9. **Test end to end**: sign in as the bootstrapped exec, confirm the member
