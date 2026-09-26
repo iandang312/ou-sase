@@ -1,26 +1,297 @@
 @import "tailwindcss";
 
+/* ---------------------------------------------------------------------------
+   OU SASE design tokens
+   Structure derived from DESIGN.md (getdesign "coinbase"), repo root — but the
+   PALETTE deliberately diverges: OU SASE runs a pastel system, not Coinbase's
+   single-voltage #0052ff. DESIGN.md stays as the scraped reference for layout,
+   type and rhythm; this file is the source of truth for color.
+   Single source of truth: edit here, not in components.
+   --------------------------------------------------------------------------- */
+
+@theme {
+  /* Brand & accent --------------------------------------------------------
+     The brand blue is a PASTEL (#bdd4e7). Pastels are surfaces, not text:
+     every pastel here ships with a matching *-ink shade that is the only one
+     safe to put type on a white canvas with. Rule of thumb:
+       fill/tint  -> --color-<name>
+       text/icon  -> --color-<name>-ink
+     ---------------------------------------------------------------------- */
+  --color-brand: #bdd4e7;
+  --color-brand-active: #a6c4dd;
+  --color-brand-disabled: #e3ecf4;
+  /* Readable companion to the pastel: links, eyebrows, badge type. */
+  --color-brand-ink: #1f5077;
+  --color-brand-ink-active: #163c5a;
+
+  /* Text ------------------------------------------------------------------ */
+  --color-ink: #0a0b0d;
+  --color-body: #5b616e;
+  --color-muted: #7c828a;
+  --color-muted-soft: #a8acb3;
+
+  /* Hairlines ------------------------------------------------------------- */
+  --color-hairline: #dee1e6;
+  --color-hairline-soft: #eef0f3;
+
+  /* Surfaces -------------------------------------------------------------- */
+  --color-canvas: #ffffff;
+  --color-surface-soft: #f7f7f7;
+  --color-surface-card: #ffffff;
+  --color-surface-strong: #eef0f3;
+  --color-surface-dark: #0a0b0d;
+  --color-surface-dark-elevated: #16181c;
+
+  /* On-color --------------------------------------------------------------
+     A pastel fill takes dark type, not white. --color-on-brand changed with
+     the brand: white on #bdd4e7 is ~1.4:1 and unreadable. */
+  --color-on-brand: #0a0b0d;
+  --color-on-dark: #ffffff;
+  --color-on-dark-soft: #a8acb3;
+
+  /* Secondary pastels -----------------------------------------------------
+     Same discipline as the brand: a soft fill plus a readable ink. Use them
+     for category tints, tier chips, illustration rails and section bands --
+     never two of them competing inside one component. ---------------------- */
+  --color-pastel-blue: #bdd4e7;
+  --color-pastel-blue-ink: #1f5077;
+
+  --color-pastel-yellow: #f6e7b4;
+  --color-pastel-yellow-ink: #7a5a10;
+
+  --color-pastel-pink: #f2c9d4;
+  --color-pastel-pink-ink: #8a3d55;
+
+  --color-pastel-mint: #c3e0cd;
+  --color-pastel-mint-ink: #2c6b48;
+
+  --color-pastel-lavender: #d4cbe8;
+  --color-pastel-lavender-ink: #57458f;
+
+  --color-pastel-peach: #f7d5bd;
+  --color-pastel-peach-ink: #8a4f26;
+
+  /* Tints — for hairline-thin washes behind cards and callouts. */
+  --color-pastel-blue-soft: #edf4f9;
+  --color-pastel-yellow-soft: #fdf7e6;
+  --color-pastel-pink-soft: #fcedf1;
+  --color-pastel-mint-soft: #e9f5ee;
+  --color-pastel-lavender-soft: #f1eef8;
+  --color-pastel-peach-soft: #fdf0e7;
+
+  /* Semantic --------------------------------------------------------------
+     Status stays saturated on purpose: a destructive confirm must not read as
+     decoration. Pastel equivalents exist for the *background* of those states. */
+  --color-positive: #05b169;
+  --color-positive-soft: #e9f5ee;
+  --color-negative: #cf202f;
+  --color-negative-soft: #fbeaec;
+  --color-accent-yellow: #f4b000;
+
+  /* Radii ----------------------------------------------------------------- */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-pill: 100px;
+
+  /* Spacing (named steps; Tailwind's numeric scale still available) -------- */
+  --spacing-xxs: 4px;
+  --spacing-xs: 8px;
+  --spacing-sm: 12px;
+  --spacing-base: 16px;
+  --spacing-md: 20px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-xxl: 48px;
+  --spacing-section: 96px;
+
+  /* Type families --------------------------------------------------------- */
+  --font-display: var(--font-sase-display), -apple-system, system-ui, "Segoe UI",
+    Roboto, Helvetica, Arial, sans-serif;
+  --font-sans: var(--font-sase-sans), -apple-system, system-ui, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
+
+  /* Type scale — DESIGN.md hierarchy.
+     Display weights are 400 on purpose: editorial calm, not fintech-bombastic. */
+  --text-display-mega: 80px;
+  --text-display-mega--line-height: 1;
+  --text-display-mega--letter-spacing: -2px;
+  --text-display-mega--font-weight: 400;
+
+  --text-display-xl: 64px;
+  --text-display-xl--line-height: 1;
+  --text-display-xl--letter-spacing: -1.6px;
+  --text-display-xl--font-weight: 400;
+
+  --text-display-lg: 52px;
+  --text-display-lg--line-height: 1;
+  --text-display-lg--letter-spacing: -1.3px;
+  --text-display-lg--font-weight: 400;
+
+  --text-display-md: 44px;
+  --text-display-md--line-height: 1.09;
+  --text-display-md--letter-spacing: -1px;
+  --text-display-md--font-weight: 400;
+
+  --text-display-sm: 36px;
+  --text-display-sm--line-height: 1.11;
+  --text-display-sm--letter-spacing: -0.5px;
+  --text-display-sm--font-weight: 400;
+
+  --text-title-lg: 32px;
+  --text-title-lg--line-height: 1.13;
+  --text-title-lg--letter-spacing: -0.4px;
+  --text-title-lg--font-weight: 400;
+
+  --text-title-md: 18px;
+  --text-title-md--line-height: 1.33;
+  --text-title-md--font-weight: 600;
+
+  --text-title-sm: 16px;
+  --text-title-sm--line-height: 1.25;
+  --text-title-sm--font-weight: 600;
+
+  --text-body-md: 16px;
+  --text-body-md--line-height: 1.5;
+
+  --text-body-sm: 14px;
+  --text-body-sm--line-height: 1.5;
+
+  --text-caption: 13px;
+  --text-caption--line-height: 1.5;
+
+  --text-caption-strong: 12px;
+  --text-caption-strong--line-height: 1.5;
+  --text-caption-strong--font-weight: 600;
+
+  --text-nav-link: 14px;
+  --text-nav-link--line-height: 1.4;
+  --text-nav-link--font-weight: 500;
+
+  --text-button: 16px;
+  --text-button--line-height: 1.15;
+  --text-button--font-weight: 600;
+
+  /* Layout ---------------------------------------------------------------- */
+  --container-site: 1200px;
+}
+
+/* ---------------------------------------------------------------------------
+   Motion tokens + scroll-reveal primitive
+   See DESIGN.md "Motion & Interaction". Animate transform and opacity only:
+   both are compositor-friendly. Animating width/height/top forces layout on
+   every frame and stutters on the mid-range phones most students carry.
+   --------------------------------------------------------------------------- */
+
+/* Easing lives in @theme because `--ease-*` is a Tailwind namespace: this is
+   what makes `ease-standard`, `ease-entrance` and `ease-exit` real utilities
+   (and still exposes each as a CSS variable for the rules below). `static`
+   emits every token even when no class uses it yet. */
+@theme static {
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-entrance: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+}
+
+/* Tailwind v4 has NO theme namespace for durations: `--duration-*` in @theme
+   does not generate `duration-base` (checked against tailwindcss 4.3). So the
+   duration tokens stay plain variables, and each named step gets an explicit
+   @utility. Setting --tw-duration too keeps them composable with `transition`. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --duration-instant: 120ms;
+  --duration-fast: 180ms;
+  --duration-base: 240ms;
+  --duration-slow: 320ms;
+  --duration-reveal: 520ms;
+  --reveal-offset: 16px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+@utility duration-instant {
+  --tw-duration: var(--duration-instant);
+  transition-duration: var(--duration-instant);
+}
+@utility duration-fast {
+  --tw-duration: var(--duration-fast);
+  transition-duration: var(--duration-fast);
+}
+@utility duration-base {
+  --tw-duration: var(--duration-base);
+  transition-duration: var(--duration-base);
+}
+@utility duration-slow {
+  --tw-duration: var(--duration-slow);
+  transition-duration: var(--duration-slow);
+}
+@utility duration-reveal {
+  --tw-duration: var(--duration-reveal);
+  transition-duration: var(--duration-reveal);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Scroll reveal. An element opts in with data-reveal; the Reveal component
+   flips it to data-reveal="shown" once, the first time it scrolls into view. */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(var(--reveal-offset));
+  transition:
+    opacity var(--duration-reveal) var(--ease-entrance),
+    transform var(--duration-reveal) var(--ease-entrance);
+  transition-delay: var(--reveal-delay, 0ms);
+  will-change: opacity, transform;
+}
+
+[data-reveal="shown"] {
+  opacity: 1;
+  transform: none;
+  will-change: auto;
+}
+
+/* Reduced motion means content arrives INSTANTLY, never that it never
+   arrives. Without this the global reduce block would zero the transition
+   while opacity stayed 0, hiding the page from the people who need it most. */
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal],
+  [data-reveal="shown"] {
+    opacity: 1;
+    transform: none;
+    transition: none;
   }
 }
 
+/* ---------------------------------------------------------------------------
+   Base
+   DESIGN.md is a light-canvas system. We do NOT ship a prefers-color-scheme
+   dark flip: the dark surfaces are editorial bands chosen per-section, not a
+   user theme. Forcing color-scheme keeps browser UA styles from inverting
+   form controls on users whose OS is in dark mode.
+   --------------------------------------------------------------------------- */
+:root {
+  color-scheme: light;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Focus: brand ring, never removed. Keyboard users are execs on the admin
+   page at 2am; do not make them guess where they are. */
+:focus-visible {
+  outline: 2px solid var(--color-brand-ink);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

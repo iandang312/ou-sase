@@ -1,0 +1,273 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { ConfirmButton } from "@/components/admin/ConfirmButton";
+import { CloudinaryUploadField } from "@/components/admin/CloudinaryUploadField";
+import { SaveStatus } from "@/components/admin/SaveStatus";
+import { deleteSponsor, listSponsors, upsertSponsor } from "@/lib/firestore";
+import { safeHttpUrl } from "@/lib/safeUrl";
+import { validateSponsorDraft } from "@/lib/validation";
+import { SPONSOR_TIERS, type Sponsor, type SponsorTier } from "@/lib/types";
+
+const TIERS = Object.keys(SPONSOR_TIERS) as SponsorTier[];
+
+const inputClass = "border-hairline rounded-md border px-3 py-2 text-body-md bg-canvas";
+
+type SponsorDraft = Omit<Sponsor, "id">;
+
+function emptyDraft(): SponsorDraft {
+  return {
+    name: "",
+    tier: "Partner",
+    logoPublicId: undefined,
+    websiteUrl: "",
+    blurb: "",
+    since: undefined,
+    active: true,
+    order: 0,
+  };
+}
+
+export function SponsorsManager() {
+  const [sponsors, setSponsors] = useState<Sponsor[] | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | "new" | null>(null);
+  const [draft, setDraft] = useState<SponsorDraft>(emptyDraft());
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  async function refresh() {
+    try {
+      setSponsors(await listSponsors(false));
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : "Failed to load sponsors.");
+    }
+  }
+
+  // Awaited inside the effect and guarded by `cancelled` — no synchronous
+  // state write on mount, and no late response landing after unmount.
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const rows = await listSponsors(false);
+        if (!cancelled) setSponsors(rows);
+      } catch (err) {
+        if (!cancelled) {
+          setLoadError(
+            err instanceof Error ? err.message : "Failed to load sponsors.",
+          );
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  function startNew() {
+    setDraft(emptyDraft());
+    setSaveState("idle");
+    setSaveError(null);
+    setEditingId("new");
+  }
+
+  function startEdit(sponsor: Sponsor) {
+    const { id: _id, ...rest } = sponsor;
+    setDraft(rest);
+    setSaveState("idle");
+    setSaveError(null);
+    setEditingId(sponsor.id);
+  }
+
+  async function handleSave() {
+    const invalid = validateSponsorDraft(draft);
+    if (invalid) {
+      setSaveState("error");
+      setSaveError(invalid);
+      return;
+    }
+    setSaveState("saving");
+    setSaveError(null);
+    try {
+      await upsertSponsor({
+        ...draft,
+        name: draft.name.trim(),
+        websiteUrl: safeHttpUrl(draft.websiteUrl),
+        id: editingId === "new" ? undefined : editingId!,
+      });
+      setSaveState("saved");
+      await refresh();
+      setTimeout(() => {
+        setEditingId(null);
+        setSaveState("idle");
+      }, 700);
+    } catch (err) {
+      setSaveState("error");
+      setSaveError(err instanceof Error ? err.message : "Failed to save sponsor.");
+    }
+  }
+
+  async function handleDelete(id: string) {
+    setLoadError(null);
+    try {
+      await deleteSponsor(id);
+      await refresh();
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : "Failed to delete sponsor.");
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center justify-between">
+        <h2 className="font-display text-title-md text-ink">Sponsors</h2>
+        {editingId === null ? <Button onClick={startNew}>Add sponsor</Button> : null}
+      </div>
+
+      {loadError ? <p className="text-negative text-body-sm">{loadError}</p> : null}
+
+      {editingId !== null ? (
+        <Card>
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h3 className="text-title-sm text-ink font-semibold">
+              {editingId === "new" ? "New sponsor" : `Edit ${draft.name || "sponsor"}`}
+            </h3>
+            <button
+              type="button"
+              onClick={() => setEditingId(null)}
+              className="text-body-sm text-brand-ink hover:underline"
+            >
+              ← Back to list
+            </button>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="flex flex-col gap-1">
+              <span className="text-caption-strong text-ink">
+                Name <span className="text-negative" aria-hidden>*</span>
+              </span>
+              <input
+                className={inputClass}
+                value={draft.name}
+                onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-caption-strong text-ink">Tier</span>
+              <select
+                className={inputClass}
+                value={draft.tier}
+                onChange={(e) => setDraft({ ...draft, tier: e.target.value as SponsorTier })}
+              >
+                {TIERS.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-caption-strong text-ink">Website URL</span>
+              <input
+                className={inputClass}
+                value={draft.websiteUrl ?? ""}
+                onChange={(e) => setDraft({ ...draft, websiteUrl: e.target.value })}
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-caption-strong text-ink">Partner since (year)</span>
+              <input
+                type="number"
+                className={inputClass}
+                value={draft.since ?? ""}
+                onChange={(e) =>
+                  setDraft({
+                    ...draft,
+                    since: e.target.value ? Number(e.target.value) : undefined,
+                  })
+                }
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-caption-strong text-ink">Order (lower sorts first)</span>
+              <input
+                type="number"
+                className={inputClass}
+                value={draft.order}
+                onChange={(e) => setDraft({ ...draft, order: Number(e.target.value) })}
+              />
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={draft.active}
+                onChange={(e) => setDraft({ ...draft, active: e.target.checked })}
+              />
+              <span className="text-body-sm text-ink">Active (shown on public sponsors page)</span>
+            </label>
+            <label className="flex flex-col gap-1 md:col-span-2">
+              <span className="text-caption-strong text-ink">Blurb</span>
+              <input
+                className={inputClass}
+                value={draft.blurb ?? ""}
+                onChange={(e) => setDraft({ ...draft, blurb: e.target.value })}
+              />
+            </label>
+            <div className="md:col-span-2">
+              <CloudinaryUploadField
+                label="Logo"
+                folder="sponsors"
+                value={draft.logoPublicId}
+                onChange={(id) => setDraft({ ...draft, logoPublicId: id })}
+              />
+            </div>
+          </div>
+          <div className="border-hairline-soft mt-6 flex flex-col gap-3 border-t pt-5 sm:flex-row sm:items-center">
+            <div className="flex gap-3">
+              <Button onClick={handleSave} disabled={saveState === "saving"}>
+                {saveState === "saving" ? "Saving…" : "Save"}
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => setEditingId(null)}
+                disabled={saveState === "saving"}
+              >
+                Cancel
+              </Button>
+            </div>
+            <SaveStatus state={saveState} savedLabel="Sponsor saved." errorText={saveError} />
+          </div>
+        </Card>
+      ) : null}
+
+      <div className="flex flex-col gap-3">
+        {sponsors === null ? (
+          <p className="text-body-sm text-body">Loading sponsors…</p>
+        ) : sponsors.length === 0 ? (
+          <p className="text-body-sm text-body">No sponsors yet.</p>
+        ) : (
+          sponsors.map((sponsor) => (
+            <Card key={sponsor.id} className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <p className="text-body-md text-ink font-semibold">
+                  {sponsor.name} <Badge tone="brand">{sponsor.tier}</Badge>{" "}
+                  {!sponsor.active ? <Badge tone="neutral">Inactive</Badge> : null}
+                </p>
+                <p className="text-body-sm text-body">order {sponsor.order}</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button variant="text" onClick={() => startEdit(sponsor)}>
+                  Edit
+                </Button>
+                <ConfirmButton onConfirm={() => handleDelete(sponsor.id)} />
+              </div>
+            </Card>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
