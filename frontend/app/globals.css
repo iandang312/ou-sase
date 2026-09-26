@@ -184,16 +184,49 @@
    both are compositor-friendly. Animating width/height/top forces layout on
    every frame and stutters on the mid-range phones most students carry.
    --------------------------------------------------------------------------- */
+
+/* Easing lives in @theme because `--ease-*` is a Tailwind namespace: this is
+   what makes `ease-standard`, `ease-entrance` and `ease-exit` real utilities
+   (and still exposes each as a CSS variable for the rules below). `static`
+   emits every token even when no class uses it yet. */
+@theme static {
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-entrance: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+}
+
+/* Tailwind v4 has NO theme namespace for durations: `--duration-*` in @theme
+   does not generate `duration-base` (checked against tailwindcss 4.3). So the
+   duration tokens stay plain variables, and each named step gets an explicit
+   @utility. Setting --tw-duration too keeps them composable with `transition`. */
 :root {
   --duration-instant: 120ms;
   --duration-fast: 180ms;
   --duration-base: 240ms;
   --duration-slow: 320ms;
   --duration-reveal: 520ms;
-  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
-  --ease-entrance: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
   --reveal-offset: 16px;
+}
+
+@utility duration-instant {
+  --tw-duration: var(--duration-instant);
+  transition-duration: var(--duration-instant);
+}
+@utility duration-fast {
+  --tw-duration: var(--duration-fast);
+  transition-duration: var(--duration-fast);
+}
+@utility duration-base {
+  --tw-duration: var(--duration-base);
+  transition-duration: var(--duration-base);
+}
+@utility duration-slow {
+  --tw-duration: var(--duration-slow);
+  transition-duration: var(--duration-slow);
+}
+@utility duration-reveal {
+  --tw-duration: var(--duration-reveal);
+  transition-duration: var(--duration-reveal);
 }
 
 /* Scroll reveal. An element opts in with data-reveal; the Reveal component
