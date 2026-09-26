@@ -165,7 +165,8 @@ try {
     console.log(`  No Firebase Auth user exists for ${email} yet.`);
     console.log(`  Created an invite instead: execInvites/${key} (role: ${role}).`);
     console.log(
-      `\n  Next: sign in at /login as ${email} (Google sign-in works).\n` +
+      `\n  Next: sign in at /login as ${email} with Google. A password account\n` +
+        "  can only claim the invite once its email address is verified.\n" +
         "  The invite is claimed automatically on that first sign-in and you\n" +
         "  will land in /admin as an officer. Nothing else to run.\n",
     );

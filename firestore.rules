@@ -67,11 +67,20 @@ service cloud.firestore {
     // Only an EXISTING active exec can create or modify exec docs (e.g.
     // through the admin "add officer" screen). The very first exec doc must
     // be created by hand in the console — see the BOOTSTRAP section above.
-    // The signed-in user's own email, lowercased, or "" if they have none.
+    // The signed-in user's own VERIFIED email, lowercased, or "" otherwise.
     // Invite documents are keyed by lowercased email so that Jane@OU.edu and
     // jane@ou.edu are the same person.
+    //
+    // email_verified is required: with the Email/Password provider enabled,
+    // anyone can create an account for any unregistered address through the
+    // public Auth API. That token carries the victim's `email` but
+    // `email_verified: false`. Without this check it could claim a pending
+    // officer invite. Google sign-in tokens are always verified, so the normal
+    // invitee path is unaffected.
     function myEmail() {
-      return request.auth != null && request.auth.token.email != null
+      return request.auth != null
+          && request.auth.token.email != null
+          && request.auth.token.email_verified == true
         ? request.auth.token.email.lower()
         : "";
     }
