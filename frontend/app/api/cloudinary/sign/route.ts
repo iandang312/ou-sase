@@ -27,7 +27,10 @@ const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET;
 const CLOUDINARY_CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
 
 /** Params we are willing to sign. Anything else is dropped. */
-const ALLOWED_PARAMS = new Set(["folder", "public_id", "tags", "context"]);
+const ALLOWED_PARAMS = new Set(["folder", "tags", "context"]);
+
+/** The folders CloudinaryUploadField callers upload into. */
+const ALLOWED_FOLDERS = new Set(["members", "resumes", "events", "sponsors"]);
 
 export async function POST(request: Request) {
   // Fail closed if we cannot verify callers at all. Signing without being
@@ -68,11 +71,23 @@ export async function POST(request: Request) {
   let requested: Record<string, unknown> = {};
   try {
     const body = await request.json();
-    if (body && typeof body === "object" && body.paramsToSign) {
+    if (body && typeof body === "object" && typeof body.paramsToSign === "object" && body.paramsToSign) {
       requested = body.paramsToSign as Record<string, unknown>;
     }
   } catch {
     requested = {};
+  }
+
+  // A signed public_id lets the caller overwrite any existing asset, such as
+  // another member's resume. Cloudinary assigns a random one when we omit it.
+  if ("public_id" in requested) {
+    return Response.json(
+      { error: "public_id is chosen by Cloudinary, not the client." },
+      { status: 400 },
+    );
+  }
+  if ("folder" in requested && !ALLOWED_FOLDERS.has(requested.folder as string)) {
+    return Response.json({ error: "Upload folder is not allowed." }, { status: 400 });
   }
 
   // Only sign a known set of params. A client that could get arbitrary params
@@ -101,13 +116,11 @@ export async function POST(request: Request) {
       signedParams: paramsToSign,
     });
   } catch (err) {
+    // The SDK's message can carry server config details; keep it in the logs.
+    console.error("Cloudinary signing failed:", err);
     return Response.json(
-      {
-        error:
-          "Failed to sign the Cloudinary upload request. " +
-          (err instanceof Error ? err.message : "Unknown error."),
-      },
-      { status: 400 },
+      { error: "Failed to sign the Cloudinary upload request." },
+      { status: 500 },
     );
   }
 }
