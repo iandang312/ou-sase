@@ -1,92 +1,128 @@
 @import "tailwindcss";
 
 /* ---------------------------------------------------------------------------
-   OU SASE design tokens
-   Structure derived from DESIGN.md (getdesign "coinbase"), repo root — but the
-   PALETTE deliberately diverges: OU SASE runs a pastel system, not Coinbase's
-   single-voltage #0052ff. DESIGN.md stays as the scraped reference for layout,
-   type and rhythm; this file is the source of truth for color.
-   Single source of truth: edit here, not in components.
+   OU SASE design tokens: the "sase programs" desk kit
+   A tactile chapter desk: grainy paper on a cool desk and a cork board, with
+   saturated accents kept to pins, tape, tickets and card washes, never
+   full-bleed bands. The palette is a PLACEHOLDER until the chapter's real
+   palette from @ou.sase arrives; swap the hex values in the first block and
+   recheck contrast. Single source of truth: edit here, not in components.
    --------------------------------------------------------------------------- */
 
 @theme {
-  /* Brand & accent --------------------------------------------------------
-     The brand blue is a PASTEL (#bdd4e7). Pastels are surfaces, not text:
-     every pastel here ships with a matching *-ink shade that is the only one
-     safe to put type on a white canvas with. Rule of thumb:
-       fill/tint  -> --color-<name>
-       text/icon  -> --color-<name>-ink
+  /* Palette ---------------------------------------------------------------
+     The only hex values in the system. Everything below derives from these.
+       surface      -> desk, paper
+       accent fill  -> --color-<accent> (pins, tape, tickets, glyphs)
+       accent wash  -> --color-<accent>-wash (card faces) / -tint (soft bands)
+       accent text  -> cobalt-deep, tomato-ink, mint-ink (sun and bubblegum
+                       never carry text: type on them is ink)
      ---------------------------------------------------------------------- */
-  --color-brand: #bdd4e7;
-  --color-brand-active: #a6c4dd;
-  --color-brand-disabled: #e3ecf4;
-  /* Readable companion to the pastel: links, eyebrows, badge type. */
-  --color-brand-ink: #1f5077;
-  --color-brand-ink-active: #163c5a;
+  --color-desk: #e3e8ee;
+  --color-desk-deep: #cdd5df;
+  --color-paper: #fffdf7;
+  --color-paper-2: #f3efe4;
+  --color-ink: #16181d;
+  --color-ink-soft: #4a4f5a;
 
-  /* Text ------------------------------------------------------------------ */
-  --color-ink: #0a0b0d;
-  --color-body: #5b616e;
-  --color-muted: #7c828a;
-  --color-muted-soft: #a8acb3;
+  --color-cobalt: #2d5bff;
+  --color-cobalt-deep: #1f45d6;
+  --color-tomato: #ff4b3a;
+  --color-tomato-ink: #b32a1a;
+  --color-sun: #ffc72c;
+  --color-mint: #12b886;
+  /* Darker than the kit's suggestion so it clears 4.5:1 on desk too. */
+  --color-mint-ink: #086b4f;
+  --color-bubblegum: #ff6eb0;
+  /* The kit's "outreach" tint; stands in for the retired peach. */
+  --color-peach: color-mix(in srgb, var(--color-tomato) 45%, var(--color-sun));
 
-  /* Hairlines ------------------------------------------------------------- */
-  --color-hairline: #dee1e6;
-  --color-hairline-soft: #eef0f3;
+  --color-cork: #a77a50;
+  --color-cork-deep: #9b6e45;
+  --color-oak: #d3ae7f;
 
-  /* Surfaces -------------------------------------------------------------- */
-  --color-canvas: #ffffff;
-  --color-surface-soft: #f7f7f7;
-  --color-surface-card: #ffffff;
-  --color-surface-strong: #eef0f3;
-  --color-surface-dark: #0a0b0d;
-  --color-surface-dark-elevated: #16181c;
+  /* Washes: the kit's card face is 26% accent over paper. Mixed over paper,
+     not alpha, so a wash reads the same on desk and on paper. */
+  --color-cobalt-wash: color-mix(in srgb, var(--color-cobalt) 26%, var(--color-paper));
+  --color-tomato-wash: color-mix(in srgb, var(--color-tomato) 26%, var(--color-paper));
+  --color-sun-wash: color-mix(in srgb, var(--color-sun) 26%, var(--color-paper));
+  --color-mint-wash: color-mix(in srgb, var(--color-mint) 26%, var(--color-paper));
+  --color-bubblegum-wash: color-mix(in srgb, var(--color-bubblegum) 26%, var(--color-paper));
+  --color-peach-wash: color-mix(in srgb, var(--color-peach) 26%, var(--color-paper));
+  --color-cobalt-tint: color-mix(in srgb, var(--color-cobalt) 12%, var(--color-paper));
+  --color-tomato-tint: color-mix(in srgb, var(--color-tomato) 12%, var(--color-paper));
+  --color-sun-tint: color-mix(in srgb, var(--color-sun) 12%, var(--color-paper));
+  --color-mint-tint: color-mix(in srgb, var(--color-mint) 12%, var(--color-paper));
+  --color-bubblegum-tint: color-mix(in srgb, var(--color-bubblegum) 12%, var(--color-paper));
+  --color-peach-tint: color-mix(in srgb, var(--color-peach) 12%, var(--color-paper));
 
-  /* On-color --------------------------------------------------------------
-     A pastel fill takes dark type, not white. --color-on-brand changed with
-     the brand: white on #bdd4e7 is ~1.4:1 and unreadable. */
-  --color-on-brand: #0a0b0d;
-  --color-on-dark: #ffffff;
-  --color-on-dark-soft: #a8acb3;
+  /* Lines: ink at low alpha, so creases and rules sit on any paper. */
+  --color-rule: color-mix(in srgb, var(--color-ink) 12%, transparent);
+  --color-rule-soft: color-mix(in srgb, var(--color-ink) 6%, transparent);
 
-  /* Secondary pastels -----------------------------------------------------
-     Same discipline as the brand: a soft fill plus a readable ink. Use them
-     for category tints, tier chips, illustration rails and section bands --
-     never two of them competing inside one component. ---------------------- */
-  --color-pastel-blue: #bdd4e7;
-  --color-pastel-blue-ink: #1f5077;
-
-  --color-pastel-yellow: #f6e7b4;
-  --color-pastel-yellow-ink: #7a5a10;
-
-  --color-pastel-pink: #f2c9d4;
-  --color-pastel-pink-ink: #8a3d55;
-
-  --color-pastel-mint: #c3e0cd;
-  --color-pastel-mint-ink: #2c6b48;
-
-  --color-pastel-lavender: #d4cbe8;
-  --color-pastel-lavender-ink: #57458f;
-
-  --color-pastel-peach: #f7d5bd;
-  --color-pastel-peach-ink: #8a4f26;
-
-  /* Tints — for hairline-thin washes behind cards and callouts. */
-  --color-pastel-blue-soft: #edf4f9;
-  --color-pastel-yellow-soft: #fdf7e6;
-  --color-pastel-pink-soft: #fcedf1;
-  --color-pastel-mint-soft: #e9f5ee;
-  --color-pastel-lavender-soft: #f1eef8;
-  --color-pastel-peach-soft: #fdf0e7;
-
-  /* Semantic --------------------------------------------------------------
-     Status stays saturated on purpose: a destructive confirm must not read as
-     decoration. Pastel equivalents exist for the *background* of those states. */
-  --color-positive: #05b169;
-  --color-positive-soft: #e9f5ee;
+  /* Semantic. Kept apart from tomato so a destructive confirm never reads as
+     decoration. */
   --color-negative: #cf202f;
   --color-negative-soft: #fbeaec;
-  --color-accent-yellow: #f4b000;
+
+  /* Legacy aliases ---------------------------------------------------------
+     The pastel-era names, pointed at the kit so every page re-themes at once.
+     Components move to the kit names page by page; the last PR of the
+     style/kit stack deletes this block. Pastel fills map to washes, not to
+     full accents: they carry *-ink type, which a saturated fill would fail. */
+  --color-brand: var(--color-cobalt);
+  --color-brand-active: var(--color-cobalt-deep);
+  --color-brand-disabled: var(--color-desk-deep);
+  --color-brand-ink: var(--color-cobalt-deep);
+  --color-brand-ink-active: var(--color-ink);
+
+  --color-body: var(--color-ink-soft);
+  --color-muted: var(--color-ink-soft);
+  /* Was a lighter grey, but it also labels content ("Resume not shared"),
+     so it gets the readable shade. Disabled states read from their fill. */
+  --color-muted-soft: var(--color-ink-soft);
+
+  --color-hairline: var(--color-rule);
+  --color-hairline-soft: var(--color-rule-soft);
+
+  --color-canvas: var(--color-desk);
+  --color-surface-soft: var(--color-paper-2);
+  --color-surface-card: var(--color-paper);
+  --color-surface-strong: var(--color-desk-deep);
+  /* Dark bands stay ink until their sections move onto cork (white type on
+     cork fails 4.5:1, so that swap needs the markup to change). The ink
+     shades here and in on-dark-soft move into the kit block as the SASEHacks
+     "after-hours desk" sub-theme, the one ink surface that stays. */
+  --color-surface-dark: var(--color-ink);
+  --color-surface-dark-elevated: color-mix(in srgb, var(--color-ink) 92%, var(--color-paper));
+
+  /* Cobalt is saturated: it takes light type (5.2:1), not ink (3.4:1). */
+  --color-on-brand: var(--color-paper);
+  --color-on-dark: var(--color-paper);
+  --color-on-dark-soft: color-mix(in srgb, var(--color-paper) 72%, var(--color-ink));
+
+  --color-pastel-blue: var(--color-cobalt-wash);
+  --color-pastel-blue-ink: var(--color-cobalt-deep);
+  --color-pastel-blue-soft: var(--color-cobalt-tint);
+  --color-pastel-yellow: var(--color-sun-wash);
+  --color-pastel-yellow-ink: var(--color-ink);
+  --color-pastel-yellow-soft: var(--color-sun-tint);
+  --color-pastel-pink: var(--color-bubblegum-wash);
+  --color-pastel-pink-ink: var(--color-ink);
+  --color-pastel-pink-soft: var(--color-bubblegum-tint);
+  --color-pastel-mint: var(--color-mint-wash);
+  --color-pastel-mint-ink: var(--color-mint-ink);
+  --color-pastel-mint-soft: var(--color-mint-tint);
+  /* Lavender is retired: it folds into bubblegum. */
+  --color-pastel-lavender: var(--color-bubblegum-wash);
+  --color-pastel-lavender-ink: var(--color-ink);
+  --color-pastel-lavender-soft: var(--color-bubblegum-tint);
+  --color-pastel-peach: var(--color-peach-wash);
+  --color-pastel-peach-ink: var(--color-tomato-ink);
+  --color-pastel-peach-soft: var(--color-peach-tint);
+
+  --color-positive: var(--color-mint-ink);
+  --color-positive-soft: var(--color-mint-tint);
 
   /* Radii ----------------------------------------------------------------- */
   --radius-xs: 4px;
@@ -95,6 +131,20 @@
   --radius-lg: 16px;
   --radius-xl: 24px;
   --radius-pill: 100px;
+  /* Paper is nearly square-cornered. */
+  --radius-paper: 3px;
+
+  /* Paper depth: layered soft shadows, from the kit. ---------------------- */
+  --shadow-paper:
+    0 1px 1px color-mix(in srgb, var(--color-ink) 12%, transparent),
+    0 2px 4px color-mix(in srgb, var(--color-ink) 8%, transparent),
+    0 12px 24px -8px color-mix(in srgb, var(--color-ink) 22%, transparent);
+  --shadow-pinned:
+    0 1px 1px color-mix(in srgb, var(--color-ink) 18%, transparent),
+    6px 10px 14px -8px color-mix(in srgb, var(--color-ink) 45%, transparent);
+  --shadow-sticker:
+    0 1px 1px color-mix(in srgb, var(--color-ink) 15%, transparent),
+    3px 5px 8px -3px color-mix(in srgb, var(--color-ink) 35%, transparent);
 
   /* Spacing (named steps; Tailwind's numeric scale still available) -------- */
   --spacing-xxs: 4px;
@@ -261,13 +311,16 @@
 
 /* ---------------------------------------------------------------------------
    Base
-   DESIGN.md is a light-canvas system. We do NOT ship a prefers-color-scheme
-   dark flip: the dark surfaces are editorial bands chosen per-section, not a
-   user theme. Forcing color-scheme keeps browser UA styles from inverting
-   form controls on users whose OS is in dark mode.
+   A light desk system. We do NOT ship a prefers-color-scheme dark flip: the
+   dark surfaces are per-section choices, not a user theme. Forcing
+   color-scheme keeps browser UA styles from inverting form controls on users
+   whose OS is in dark mode.
    --------------------------------------------------------------------------- */
 :root {
   color-scheme: light;
+  /* Paper grain tile (fractal noise). Lay it over paper in a ::before with
+     mix-blend-mode: multiply at opacity .22 to .35. */
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .52 0 0 0 0 .56 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 body {
@@ -277,12 +330,27 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Focus: brand ring, never removed. Keyboard users are execs on the admin
+/* Tilted paper pokes past a 16px gutter. clip, not hidden: hidden would make
+   <main> a scroll container and break the sticky ScrollScene stages. */
+main {
+  overflow-x: clip;
+}
+
+/* Focus: cobalt ring, never removed. Keyboard users are execs on the admin
    page at 2am; do not make them guess where they are. */
 :focus-visible {
-  outline: 2px solid var(--color-brand-ink);
-  outline-offset: 2px;
+  outline: 2px solid var(--color-cobalt);
+  outline-offset: 3px;
   border-radius: 2px;
+}
+
+/* Cobalt on cork is 1.2:1, so on the board the ring sits on a paper halo. */
+[data-surface="cork"] :focus-visible {
+  /* Keep any Tailwind shadow or ring the element already has. */
+  box-shadow:
+    0 0 0 7px var(--color-paper),
+    var(--tw-ring-shadow, 0 0 #0000),
+    var(--tw-shadow, 0 0 #0000);
 }
 
 @media (prefers-reduced-motion: reduce) {
