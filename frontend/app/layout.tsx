@@ -1,32 +1,43 @@
 import type { Metadata } from "next";
-import { Inter, Geist_Mono } from "next/font/google";
+import { Archivo, Caveat, Instrument_Sans, JetBrains_Mono } from "next/font/google";
 import { Nav } from "@/components/site/Nav";
 import { Footer } from "@/components/site/Footer";
 import { AuthProvider } from "@/lib/useAuth";
 import "./globals.css";
 
 /**
- * DESIGN.md font substitutes: CoinbaseDisplay and CoinbaseSans are licensed,
- * and Inter is the sanctioned stand-in for both. CoinbaseMono -> Geist Mono.
- * Display weight stays at 400 — that restraint is the whole typographic voice.
+ * The desk kit's type: Archivo wide for headings (the wdth axis gives the
+ * 125% stretch), Instrument Sans for body, JetBrains Mono for labels, Caveat
+ * for handwritten captions. Mono sets above-the-fold eyebrows and stats on
+ * every page, so it preloads; Caveat is rare, so it loads only where used.
  */
-const inter = Inter({
+const archivo = Archivo({
+  variable: "--font-sase-display",
+  subsets: ["latin"],
+  axes: ["wdth"],
+  display: "swap",
+  // next/font sizes its fallback for Archivo at normal width, but headings run
+  // at 125%, so the swap re-wrapped them. globals.css has a wide fallback.
+  adjustFontFallback: false,
+});
+
+const instrumentSans = Instrument_Sans({
   variable: "--font-sase-sans",
   subsets: ["latin"],
   display: "swap",
 });
 
-const interDisplay = Inter({
-  variable: "--font-sase-display",
-  subsets: ["latin"],
-  weight: ["400", "500"],
-  display: "swap",
-});
-
-const geistMono = Geist_Mono({
+const jetbrainsMono = JetBrains_Mono({
   variable: "--font-sase-mono",
   subsets: ["latin"],
   display: "swap",
+});
+
+const caveat = Caveat({
+  variable: "--font-sase-hand",
+  subsets: ["latin"],
+  display: "swap",
+  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -42,7 +53,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${interDisplay.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${archivo.variable} ${instrumentSans.variable} ${jetbrainsMono.variable} ${caveat.variable} h-full antialiased`}
     >
       <head>
         {/*

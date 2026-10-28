@@ -158,42 +158,46 @@
   --spacing-section: 96px;
 
   /* Type families --------------------------------------------------------- */
-  --font-display: var(--font-sase-display), -apple-system, system-ui, "Segoe UI",
-    Roboto, Helvetica, Arial, sans-serif;
+  --font-display: var(--font-sase-display), "Archivo Wide Fallback", "Archivo Wide Fallback Bold",
+    -apple-system, system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-sans: var(--font-sase-sans), -apple-system, system-ui, "Segoe UI", Roboto,
     Helvetica, Arial, sans-serif;
+  --font-mono: var(--font-sase-mono), ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  /* Caveat: polaroid captions and sticky notes only. */
+  --font-hand: var(--font-sase-hand), "Segoe Print", cursive;
 
-  /* Type scale — DESIGN.md hierarchy.
-     Display weights are 400 on purpose: editorial calm, not fintech-bombastic. */
-  --text-display-mega: 80px;
+  /* Type scale. Display steps are Archivo at 125% width and weight 850,
+     tracked tight; the wide face runs ~20% wider than the old Inter, so the
+     sizes step down to keep the same line lengths. */
+  --text-display-mega: 66px;
   --text-display-mega--line-height: 1;
-  --text-display-mega--letter-spacing: -2px;
-  --text-display-mega--font-weight: 400;
+  --text-display-mega--letter-spacing: -0.03em;
+  --text-display-mega--font-weight: 850;
 
-  --text-display-xl: 64px;
+  --text-display-xl: 54px;
   --text-display-xl--line-height: 1;
-  --text-display-xl--letter-spacing: -1.6px;
-  --text-display-xl--font-weight: 400;
+  --text-display-xl--letter-spacing: -0.03em;
+  --text-display-xl--font-weight: 850;
 
-  --text-display-lg: 52px;
+  --text-display-lg: 44px;
   --text-display-lg--line-height: 1;
-  --text-display-lg--letter-spacing: -1.3px;
-  --text-display-lg--font-weight: 400;
+  --text-display-lg--letter-spacing: -0.025em;
+  --text-display-lg--font-weight: 850;
 
-  --text-display-md: 44px;
+  --text-display-md: 36px;
   --text-display-md--line-height: 1.09;
-  --text-display-md--letter-spacing: -1px;
-  --text-display-md--font-weight: 400;
+  --text-display-md--letter-spacing: -0.02em;
+  --text-display-md--font-weight: 850;
 
-  --text-display-sm: 36px;
+  --text-display-sm: 30px;
   --text-display-sm--line-height: 1.11;
-  --text-display-sm--letter-spacing: -0.5px;
-  --text-display-sm--font-weight: 400;
+  --text-display-sm--letter-spacing: -0.02em;
+  --text-display-sm--font-weight: 850;
 
-  --text-title-lg: 32px;
+  --text-title-lg: 26px;
   --text-title-lg--line-height: 1.13;
-  --text-title-lg--letter-spacing: -0.4px;
-  --text-title-lg--font-weight: 400;
+  --text-title-lg--letter-spacing: -0.02em;
+  --text-title-lg--font-weight: 800;
 
   --text-title-md: 18px;
   --text-title-md--line-height: 1.33;
@@ -256,6 +260,29 @@
   --duration-slow: 320ms;
   --duration-reveal: 520ms;
   --reveal-offset: 16px;
+}
+
+/* Stand-ins while Archivo loads, scaled to its 125%-wide, 850-weight line
+   length (measured) so headings keep their line breaks when it swaps in. */
+@font-face {
+  font-family: "Archivo Wide Fallback";
+  src: local("Arial Black"), local("ArialMT-Black");
+  /* Covers every weight, so the browser never fakes bold on top. */
+  font-weight: 100 900;
+  size-adjust: 115%;
+}
+@font-face {
+  font-family: "Archivo Wide Fallback Bold";
+  src: local("Arial Bold"), local("Arial-BoldMT");
+  font-weight: 100 900;
+  size-adjust: 133%;
+}
+
+/* Headings set in Archivo use its wide cut. Overriding the theme utility
+   keeps every existing `font-display` class wide with no component edits. */
+@utility font-display {
+  font-family: var(--font-display);
+  font-stretch: 125%;
 }
 
 @utility duration-instant {
